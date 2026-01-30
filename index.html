@@ -15,6 +15,7 @@
             --error: #dc3545;
             --border-radius: 8px;
             --shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --header-height: 80px; /* Fixed header height */
         }
 
         body {
@@ -24,53 +25,63 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-            min-height: 100vh;
+            height: 100vh; /* Fixed height for body */
+            overflow: hidden; /* Prevent body scroll, handle in container */
             display: flex;
             flex-direction: column;
-            -webkit-text-size-adjust: 100%; /* Prevent font scaling on orientation change */
+            -webkit-text-size-adjust: 100%;
+            touch-action: manipulation; /* Disable double-tap zoom */
         }
 
-        /* Header */
+        /* Fixed Header */
         header {
             background-color: var(--primary-color);
             color: var(--white);
-            padding: 1.5rem 1rem;
+            padding: 1rem;
             text-align: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            position: relative;
-            flex-shrink: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            box-sizing: border-box;
+            height: var(--header-height);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
-        header h1 { margin: 0; font-size: 1.4rem; font-weight: 700; }
-        header .subheader { margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.9; color: #dceefb; }
+        header h1 { margin: 0; font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
+        header .subheader { margin-top: 0.2rem; font-size: 0.75rem; opacity: 0.9; color: #dceefb; }
 
         /* Navigation / Home Button */
         .home-btn {
             position: absolute;
-            left: 15px;
+            left: 10px;
             top: 50%;
             transform: translateY(-50%);
             background: rgba(255,255,255,0.2);
             color: white;
             border: 1px solid rgba(255,255,255,0.4);
-            padding: 6px 12px;
+            padding: 6px 10px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-decoration: none;
-            display: none; /* Hidden on landing page */
+            display: none; 
         }
         .home-btn:hover { background: rgba(255,255,255,0.3); }
 
-        /* Layout */
+        /* Main Scrollable Container */
         .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
+            margin-top: var(--header-height); /* Offset for fixed header */
             flex: 1;
             width: 100%;
             box-sizing: border-box;
-            overflow-y: auto; /* Allow scrolling within container if needed */
+            overflow-y: auto; /* Scrollable content */
+            padding: 15px;
+            -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
         }
 
         /* Views */
@@ -79,27 +90,20 @@
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Landing Page Tiles - Mobile Optimized */
+        /* Compact Landing Page for iPhone */
         .landing-grid {
             display: flex;
             flex-direction: column;
             gap: 15px;
-            margin-top: 20px;
-            align-items: center; /* Center cards */
-        }
-        @media(min-width: 600px) { 
-            .landing-grid { 
-                display: grid; 
-                grid-template-columns: 1fr 1fr; 
-                gap: 20px; 
-                margin-top: 40px; 
-                align-items: stretch;
-            } 
+            margin-top: 10px;
+            align-items: center;
+            justify-content: center;
+            height: calc(100vh - var(--header-height) - 80px); /* Fill available space */
         }
 
         .landing-card {
             background: white;
-            padding: 25px 20px; /* Reduced padding */
+            padding: 20px;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
             text-align: center;
@@ -107,42 +111,47 @@
             transition: transform 0.2s, box-shadow 0.2s;
             border: 2px solid transparent;
             width: 100%;
-            max-width: 340px; /* Constrain width for mobile look */
+            max-width: 300px; /* Narrower for iPhone */
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1; /* Distribute height equally */
+            max-height: 220px; /* Cap height */
         }
         .landing-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            transform: scale(1.02);
             border-color: var(--accent-color);
         }
-        .landing-card h2 { color: var(--primary-color); margin-bottom: 8px; font-size: 1.2rem; }
-        .landing-card p { color: #666; font-size: 0.95rem; margin: 0; }
-        .icon-large { font-size: 2.5rem; margin-bottom: 10px; display: block; }
+        .landing-card h2 { color: var(--primary-color); margin: 5px 0; font-size: 1.1rem; }
+        .landing-card p { color: #666; font-size: 0.85rem; margin: 0; line-height: 1.3; }
+        .icon-large { font-size: 2rem; margin-bottom: 5px; display: block; }
 
         /* Input Cards */
         .card {
             background: var(--white);
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
-            padding: 1.5rem;
+            padding: 1.2rem;
             margin-bottom: 1.5rem;
         }
 
-        .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #444; }
+        .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #444; font-size: 0.95rem; }
         textarea {
-            width: 100%; height: 120px; padding: 12px;
+            width: 100%; height: 100px; padding: 10px;
             border: 2px solid #ddd; border-radius: var(--border-radius);
-            font-size: 1rem; font-family: inherit; resize: vertical;
+            font-size: 1rem; font-family: inherit; resize: none;
             box-sizing: border-box; transition: border-color 0.3s;
-            -webkit-appearance: none; /* iOS fix */
+            -webkit-appearance: none;
         }
         textarea:focus { outline: none; border-color: var(--primary-color); }
 
         button.action-btn {
             background-color: var(--primary-color); color: white; border: none;
-            padding: 12px 24px; font-size: 1rem; font-weight: 600;
+            padding: 12px; font-size: 1rem; font-weight: 600;
             border-radius: var(--border-radius); cursor: pointer; margin-top: 1rem;
-            transition: background 0.2s; width: 100%;
+            width: 100%;
             -webkit-tap-highlight-color: transparent;
         }
         button.action-btn:hover { background-color: #002244; }
@@ -153,26 +162,28 @@
             border: 1px solid #e1e4e8; border-radius: var(--border-radius);
             overflow: hidden;
         }
-        .result-header { background: #e9ecef; padding: 10px 15px; font-weight: bold; color: #495057; border-bottom: 1px solid #dee2e6; font-size: 0.95rem; }
+        .result-header { background: #e9ecef; padding: 10px; font-weight: bold; color: #495057; border-bottom: 1px solid #dee2e6; font-size: 0.9rem; }
         .result-content { padding: 15px; }
         .classification-block { margin-bottom: 1.2rem; }
         .label-tag {
             display: inline-block; background-color: var(--accent-color); color: #333;
-            padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;
+            padding: 3px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 700;
             margin-bottom: 4px; text-transform: uppercase;
         }
-        .classification-text { font-size: 1.15rem; font-weight: 700; color: var(--primary-color); margin-bottom: 5px; line-height: 1.3; }
+        .classification-text { font-size: 1.1rem; font-weight: 700; color: var(--primary-color); margin-bottom: 5px; line-height: 1.3; }
         .expanded-text {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa; padding: 12px;
+            background: #f8f9fa; padding: 10px;
             border-left: 4px solid var(--accent-color);
             color: #333; font-size: 0.95rem; margin-top: 5px; line-height: 1.5;
         }
 
         /* Quiz */
-        .quiz-question { font-size: 1.1rem; margin-bottom: 1.2rem; font-weight: 500; }
+        .quiz-question { font-size: 1rem; margin-bottom: 1rem; font-weight: 500; }
         .options-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        @media(min-width: 600px) { .options-grid { grid-template-columns: 1fr 1fr; } .action-btn { width: auto; } }
+        /* Single column on very small screens, 2 col on slightly larger */
+        @media(min-width: 400px) { .options-grid { grid-template-columns: 1fr 1fr; } }
+        
         .quiz-btn {
             background: white; border: 2px solid #ddd; padding: 12px; text-align: left;
             border-radius: var(--border-radius); cursor: pointer; transition: all 0.2s; font-size: 0.9rem;
@@ -181,12 +192,12 @@
         .quiz-btn:hover { background-color: #f0f4f8; border-color: #bbb; }
         .quiz-btn.correct { background-color: #d4edda !important; border-color: #28a745 !important; color: #155724 !important; }
         .quiz-btn.wrong { background-color: #f8d7da !important; border-color: #dc3545 !important; color: #721c24 !important; }
-        .feedback-area { margin-top: 15px; padding: 12px; border-radius: var(--border-radius); text-align: center; font-weight: bold; display: none; font-size: 0.95rem; }
+        .feedback-area { margin-top: 15px; padding: 10px; border-radius: var(--border-radius); text-align: center; font-weight: bold; display: none; font-size: 0.9rem; }
         .controls { margin-top: 20px; text-align: center; }
 
         footer { 
-            text-align: center; padding: 1.5rem; background-color: #2c3e50; color: #bbb; font-size: 0.75rem; 
-            margin-top: auto; flex-shrink: 0;
+            text-align: center; padding: 10px; background-color: #2c3e50; color: #bbb; font-size: 0.7rem; 
+            flex-shrink: 0;
         }
     </style>
 </head>
@@ -195,7 +206,7 @@
 <header>
     <button class="home-btn" id="homeBtn" onclick="showPage('landing')">← Home</button>
     <h1>2025 ILAE Classification Assistant</h1>
-    <div class="subheader">Developed by Dr. Fawzi Babtain, MBBS, MHSc, FRCPC, CSCN</div>
+    <div class="subheader">Developed by Dr. Fawzi BAbtain, MBBS, MHSc, FRCPC, CSCN</div>
 </header>
 
 <div class="container">
@@ -220,7 +231,7 @@
     <div id="classifier" class="view-section">
         <div class="card">
             <h2>Seizure Classification Tool</h2>
-            <p>Enter the free-text description of the seizure semiology. The tool analyzes text for auras, motor signs, and consciousness to generate the 2025 ILAE classification.</p>
+            <p>Enter the free-text description of the seizure semiology.</p>
             
             <div class="input-group">
                 <label for="seizureInput">Seizure Semiology:</label>
@@ -246,7 +257,7 @@
                     </div>
 
                     <!-- Warnings -->
-                    <div id="gtcWarning" style="display:none; margin-top:15px; padding:10px; background:#fff3cd; color:#856404; border-radius:4px; border:1px solid #ffeeba;">
+                    <div id="gtcWarning" style="display:none; margin-top:15px; padding:10px; background:#fff3cd; color:#856404; border-radius:4px; border:1px solid #ffeeba; font-size: 0.85rem;">
                         <strong>Clinical Note:</strong> Tonic-clonic seizures carry the highest risk of injury and SUDEP regardless of onset type.
                     </div>
                 </div>
@@ -258,7 +269,7 @@
     <div id="quiz" class="view-section">
         <div class="card">
             <h2>Test Your Knowledge</h2>
-            <p>Randomized MCQ based on 2025 ILAE Clinical Vignettes.</p>
+            <p style="font-size: 0.9rem;">Randomized MCQ based on 2025 ILAE Clinical Vignettes.</p>
             
             <div id="quizContainer">
                 <div id="questionText" class="quiz-question">Click "Start Quiz" to generate a case.</div>
