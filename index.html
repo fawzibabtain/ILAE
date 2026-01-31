@@ -18,6 +18,13 @@
             --header-height: 80px; /* Fixed header height */
         }
 
+        /* Prevent zooming on the entire document */
+        html, body {
+            touch-action: pan-x pan-y; /* Disable pinch zoom */
+            height: 100%;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--light-bg);
@@ -25,19 +32,16 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-            height: 100vh; /* Fixed height for body */
-            overflow: hidden; /* Prevent body scroll, handle in container */
             display: flex;
             flex-direction: column;
             -webkit-text-size-adjust: 100%;
-            touch-action: manipulation; /* Disable double-tap zoom */
         }
 
         /* Fixed Header */
         header {
             background-color: var(--primary-color);
             color: var(--white);
-            padding: 1rem;
+            padding: 0.5rem 1rem;
             text-align: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             position: fixed;
@@ -85,20 +89,19 @@
         }
 
         /* Views */
-        .view-section { display: none; }
+        .view-section { display: none; height: 100%; }
         .view-section.active { display: block; animation: fadeIn 0.3s ease-in; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* Compact Landing Page for iPhone */
-        .landing-grid {
+        .landing-container {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin-top: 10px;
             align-items: center;
             justify-content: center;
-            height: calc(100vh - var(--header-height) - 80px); /* Fill available space */
+            height: 100%; /* Fill container height */
+            gap: 20px;
         }
 
         .landing-card {
@@ -118,7 +121,7 @@
             align-items: center;
             justify-content: center;
             flex: 1; /* Distribute height equally */
-            max-height: 220px; /* Cap height */
+            max-height: 200px; /* Cap height to ensure fit */
         }
         .landing-card:hover {
             transform: scale(1.02);
@@ -206,14 +209,14 @@
 <header>
     <button class="home-btn" id="homeBtn" onclick="showPage('landing')">← Home</button>
     <h1>2025 ILAE Classification Assistant</h1>
-    <div class="subheader">Developed by Dr. Fawzi BAbtain, MBBS, MHSc, FRCPC, CSCN</div>
+    <div class="subheader">Developed by Dr. Fawzi Babtain, MBBS, MHSc, FRCPC, CSCN</div>
 </header>
 
 <div class="container">
 
     <!-- LANDING PAGE -->
     <div id="landing" class="view-section active">
-        <div class="landing-grid">
+        <div class="landing-container">
             <div class="landing-card" onclick="showPage('classifier')">
                 <span class="icon-large">🧠</span>
                 <h2>Classification Tool</h2>
