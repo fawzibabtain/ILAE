@@ -23,14 +23,14 @@
             touch-action: pan-x pan-y; /* Disable pinch zoom */
             height: 100%;
             overflow: hidden; /* Prevent body scroll */
+            margin: 0;
+            padding: 0;
         }
 
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--light-bg);
             color: var(--text-color);
-            margin: 0;
-            padding: 0;
             line-height: 1.6;
             display: flex;
             flex-direction: column;
@@ -54,6 +54,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            align-items: center; /* Center content horizontally */
         }
 
         header h1 { margin: 0; font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
@@ -74,8 +75,14 @@
             font-size: 0.8rem;
             text-decoration: none;
             display: none; 
+            z-index: 1001; /* Ensure above text */
         }
         .home-btn:hover { background: rgba(255,255,255,0.3); }
+
+        /* Adjust header padding to accommodate button */
+        /* Only apply padding when NOT in landing mode to center title */
+        body:not(.landing-mode) header { padding-left: 70px; padding-right: 10px; } 
+
 
         /* Main Scrollable Container */
         .container {
@@ -204,7 +211,7 @@
         }
     </style>
 </head>
-<body>
+<body class="landing-mode">
 
 <header>
     <button class="home-btn" id="homeBtn" onclick="showPage('landing')">← Home</button>
@@ -298,7 +305,16 @@
     function showPage(pageId) {
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
         document.getElementById(pageId).classList.add('active');
-        document.getElementById('homeBtn').style.display = (pageId === 'landing') ? 'none' : 'block';
+        const homeBtn = document.getElementById('homeBtn');
+        const body = document.body;
+        
+        if (pageId === 'landing') {
+            homeBtn.style.display = 'none';
+            body.classList.add('landing-mode');
+        } else {
+            homeBtn.style.display = 'block';
+            body.classList.remove('landing-mode');
+        }
     }
 
     /**
