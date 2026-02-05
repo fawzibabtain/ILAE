@@ -3,798 +3,813 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2025 ILAE Seizure Classification Assistant</title>
+    <title>2025 ILAE Epilepsy Classifier & Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#003366',
+              secondary: '#e6b800',
+              accent: '#f4f7f6',
+              success: '#27ae60',
+              warning: '#f39c12',
+              danger: '#c0392b',
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.3s ease-in-out',
+              'slide-up': 'slideUp 0.4s ease-out',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              slideUp: {
+                '0%': { transform: 'translateY(20px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              }
+            }
+          }
+        }
+      }
+    </script>
     <style>
-        :root {
-            --primary-color: #003366; /* Deep medical blue */
-            --accent-color: #e6b800; /* ILAE Yellow/Gold */
-            --light-bg: #f4f7f6;
-            --text-color: #2c3e50;
-            --white: #ffffff;
-            --success: #28a745;
-            --error: #dc3545;
-            --border-radius: 8px;
-            --shadow: 0 4px 12px rgba(0,0,0,0.1);
-            --header-height: 80px; /* Fixed header height */
-        }
-
-        /* Prevent zooming on the entire document */
-        html, body {
-            touch-action: pan-x pan-y; /* Disable pinch zoom */
-            height: 100%;
-            overflow: hidden; /* Prevent body scroll */
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--light-bg);
-            color: var(--text-color);
-            line-height: 1.6;
-            display: flex;
-            flex-direction: column;
-            -webkit-text-size-adjust: 100%;
-        }
-
-        /* Fixed Header */
-        header {
-            background-color: var(--primary-color);
-            color: var(--white);
-            padding: 0.5rem 1rem;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 1000;
-            box-sizing: border-box;
-            height: var(--header-height);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center; /* Center content horizontally */
-        }
-
-        header h1 { margin: 0; font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
-        header .subheader { margin-top: 0.2rem; font-size: 0.75rem; opacity: 0.9; color: #dceefb; }
-
-        /* Navigation / Home Button */
-        .home-btn {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.4);
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            text-decoration: none;
-            display: none; 
-            z-index: 1001; /* Ensure above text */
-        }
-        .home-btn:hover { background: rgba(255,255,255,0.3); }
-
-        /* Adjust header padding to accommodate button */
-        /* Only apply padding when NOT in landing mode to center title */
-        body:not(.landing-mode) header { padding-left: 70px; padding-right: 10px; } 
-
-
-        /* Main Scrollable Container */
-        .container {
-            margin-top: var(--header-height); /* Offset for fixed header */
-            flex: 1;
-            width: 100%;
-            box-sizing: border-box;
-            overflow-y: auto; /* Scrollable content */
-            padding: 15px;
-            -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
-        }
-
-        /* Views */
-        .view-section { display: none; height: 100%; }
-        .view-section.active { display: block; animation: fadeIn 0.3s ease-in; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Compact Landing Page for iPhone */
-        .landing-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%; /* Fill container height */
-            gap: 20px;
-        }
-
-        .landing-card {
-            background: white;
-            padding: 20px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 2px solid transparent;
-            width: 100%;
-            max-width: 300px; /* Narrower for iPhone */
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex: 1; /* Distribute height equally */
-            max-height: 200px; /* Cap height to ensure fit */
-        }
-        .landing-card:hover {
-            transform: scale(1.02);
-            border-color: var(--accent-color);
-        }
-        .landing-card h2 { color: var(--primary-color); margin: 5px 0; font-size: 1.1rem; }
-        .landing-card p { color: #666; font-size: 0.85rem; margin: 0; line-height: 1.3; }
-        .icon-large { font-size: 2rem; margin-bottom: 5px; display: block; }
-
-        /* Input Cards */
-        .card {
-            background: var(--white);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            padding: 1.2rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #444; font-size: 0.95rem; }
-        textarea {
-            width: 100%; height: 100px; padding: 10px;
-            border: 2px solid #ddd; border-radius: var(--border-radius);
-            font-size: 1rem; font-family: inherit; resize: none;
-            box-sizing: border-box; transition: border-color 0.3s;
-            -webkit-appearance: none;
-        }
-        textarea:focus { outline: none; border-color: var(--primary-color); }
-
-        button.action-btn {
-            background-color: var(--primary-color); color: white; border: none;
-            padding: 12px; font-size: 1rem; font-weight: 600;
-            border-radius: var(--border-radius); cursor: pointer; margin-top: 1rem;
-            width: 100%;
-            -webkit-tap-highlight-color: transparent;
-        }
-        button.action-btn:hover { background-color: #002244; }
-
-        /* Results */
-        .result-box {
-            display: none; margin-top: 20px; background: #fff;
-            border: 1px solid #e1e4e8; border-radius: var(--border-radius);
-            overflow: hidden;
-        }
-        .result-header { background: #e9ecef; padding: 10px; font-weight: bold; color: #495057; border-bottom: 1px solid #dee2e6; font-size: 0.9rem; }
-        .result-content { padding: 15px; }
-        .classification-block { margin-bottom: 1.2rem; }
-        .label-tag {
-            display: inline-block; background-color: var(--accent-color); color: #333;
-            padding: 3px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 700;
-            margin-bottom: 4px; text-transform: uppercase;
-        }
-        .classification-text { font-size: 1.1rem; font-weight: 700; color: var(--primary-color); margin-bottom: 5px; line-height: 1.3; }
-        .expanded-text {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa; padding: 10px;
-            border-left: 4px solid var(--accent-color);
-            color: #333; font-size: 0.95rem; margin-top: 5px; line-height: 1.5;
-        }
-
-        /* Quiz */
-        .quiz-question { font-size: 1rem; margin-bottom: 1rem; font-weight: 500; }
-        .options-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        /* Single column on very small screens, 2 col on slightly larger */
-        @media(min-width: 400px) { .options-grid { grid-template-columns: 1fr 1fr; } }
-        
-        .quiz-btn {
-            background: white; border: 2px solid #ddd; padding: 12px; text-align: left;
-            border-radius: var(--border-radius); cursor: pointer; transition: all 0.2s; font-size: 0.9rem;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .quiz-btn:hover { background-color: #f0f4f8; border-color: #bbb; }
-        .quiz-btn.correct { background-color: #d4edda !important; border-color: #28a745 !important; color: #155724 !important; }
-        .quiz-btn.wrong { background-color: #f8d7da !important; border-color: #dc3545 !important; color: #721c24 !important; }
-        .feedback-area { margin-top: 15px; padding: 10px; border-radius: var(--border-radius); text-align: center; font-weight: bold; display: none; font-size: 0.9rem; }
-        .controls { margin-top: 20px; text-align: center; }
-
-        footer { 
-            text-align: center; padding: 10px; background-color: #2c3e50; color: #bbb; font-size: 0.7rem; 
-            flex-shrink: 0;
-        }
+      body {
+        -webkit-tap-highlight-color: transparent;
+        background-color: #f4f7f6;
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #f1f1f1; }
+      ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+      
+      .view-section { display: none; }
+      .view-section.active { display: block; }
     </style>
 </head>
-<body class="landing-mode">
+<body class="bg-accent text-slate-800 font-sans min-h-screen flex flex-col">
 
-<header>
-    <button class="home-btn" id="homeBtn" onclick="showPage('landing')">← Home</button>
-    <h1>2025 ILAE Classification Assistant</h1>
-    <div class="subheader">Developed by Dr. Fawzi Babtain, MBBS, MHSc, FRCPC, CSCN</div>
-</header>
-
-<div class="container">
-
-    <!-- LANDING PAGE -->
-    <div id="landing" class="view-section active">
-        <div class="landing-container">
-            <div class="landing-card" onclick="showPage('classifier')">
-                <span class="icon-large">🧠</span>
-                <h2>Classification Tool</h2>
-                <p>Generate classifications from free-text semiology.</p>
+    <!-- Header -->
+    <header class="bg-primary text-white p-4 shadow-md z-10 sticky top-0">
+        <div class="max-w-4xl mx-auto flex items-center justify-between relative">
+            <button id="homeBtn" onclick="navigateTo('landing')" class="hidden text-white/80 hover:text-white font-bold text-sm px-3 py-1 border border-white/30 rounded flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Home
+            </button>
+            <div class="text-center w-full">
+                <h1 class="text-xl md:text-2xl font-bold tracking-tight">2025 ILAE Classification Tool</h1>
+                <div class="text-xs text-gray-300 mt-1 font-light italic">
+                    Developed by Fawzi Babtain, MBBS, FRCPC, CSCN
+                </div>
             </div>
-            <div class="landing-card" onclick="showPage('quiz')">
-                <span class="icon-large">📝</span>
-                <h2>Test Your Knowledge</h2>
-                <p>Challenge yourself with randomized clinical cases.</p>
-            </div>
+            <div class="w-16"></div> <!-- Spacer for centering -->
         </div>
-    </div>
+    </header>
 
-    <!-- CLASSIFIER PAGE -->
-    <div id="classifier" class="view-section">
-        <div class="card">
-            <h2>Seizure Classification Tool</h2>
-            <p>Enter the free-text description of the seizure semiology.</p>
+    <!-- Main Content -->
+    <main class="flex-1 p-4 md:p-6 overflow-y-auto">
+        <div class="max-w-4xl mx-auto">
             
-            <div class="input-group">
-                <label for="seizureInput">Seizure Semiology:</label>
-                <textarea id="seizureInput" placeholder="Example: Fear, rising sensation, then bilateral tonic clonic..."></textarea>
-            </div>
-
-            <button class="action-btn" onclick="generateClassification()">Generate Classification</button>
-
-            <div id="results" class="result-box">
-                <div class="result-header">Classification Report</div>
-                <div class="result-content">
-                    
-                    <!-- Basic -->
-                    <div class="classification-block">
-                        <span class="label-tag">Basic Version</span>
-                        <div id="basicOutput" class="classification-text"></div>
+            <!-- LANDING SCREEN -->
+            <div id="landing" class="view-section active animate-fade-in">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                    <div onclick="navigateTo('classifier')" class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer border-t-4 border-primary group">
+                        <div class="text-5xl mb-4 group-hover:scale-110 transition-transform duration-200">🧠</div>
+                        <h3 class="text-2xl font-bold text-primary mb-3">Epilepsy Classifier</h3>
+                        <p class="text-slate-500 text-lg leading-relaxed">
+                            Classify seizures using the 2025 ILAE Basic & Expanded framework. Specialized analysis for eye and head deviation sequences.
+                        </p>
                     </div>
 
-                    <!-- Expanded -->
-                    <div class="classification-block">
-                        <span class="label-tag">Expanded Version</span>
-                        <div id="expandedOutput" class="expanded-text"></div>
-                    </div>
-
-                    <!-- Warnings -->
-                    <div id="gtcWarning" style="display:none; margin-top:15px; padding:10px; background:#fff3cd; color:#856404; border-radius:4px; border:1px solid #ffeeba; font-size: 0.85rem;">
-                        <strong>Clinical Note:</strong> Tonic-clonic seizures carry the highest risk of injury and SUDEP regardless of onset type.
+                    <div onclick="navigateTo('quiz')" class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer border-t-4 border-secondary group">
+                        <div class="text-5xl mb-4 group-hover:scale-110 transition-transform duration-200">📝</div>
+                        <h3 class="text-2xl font-bold text-primary mb-3">Test Your Knowledge</h3>
+                        <p class="text-slate-500 text-lg leading-relaxed">
+                            Interactive clinical scenarios. Choose between ILAE 2025 Classification and Seizure Semiology localization modules.
+                        </p>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- QUIZ PAGE -->
-    <div id="quiz" class="view-section">
-        <div class="card">
-            <h2>Test Your Knowledge</h2>
-            <p style="font-size: 0.9rem;">Randomized MCQ based on 2025 ILAE Clinical Vignettes.</p>
-            
-            <div id="quizContainer">
-                <div id="questionText" class="quiz-question">Click "Start Quiz" to generate a case.</div>
-                <div id="optionsContainer" class="options-grid"></div>
-                <div id="quizFeedback" class="feedback-area"></div>
+            <!-- CLASSIFIER SCREEN -->
+            <div id="classifier" class="view-section animate-fade-in">
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                    <label class="block text-primary font-bold mb-3 text-lg">Enter Seizure Description:</label>
+                    <textarea id="seizureInput"
+                        class="w-full h-40 p-4 border-2 border-slate-200 rounded-lg focus:border-primary focus:outline-none focus:ring-0 text-lg resize-y mb-4 transition-colors"
+                        placeholder="Example: Patient describes palpitations followed by lip smacking, head and eyes turned to the left, and stiffening of the left arm..."></textarea>
+                    <button onclick="runClassification()" 
+                        class="w-full bg-primary hover:bg-blue-900 text-white font-bold py-4 rounded-lg text-lg transition-colors shadow-md active:scale-[0.99]">
+                        Classify (ILAE 2025)
+                    </button>
+                </div>
+
+                <div id="resultContainer" class="hidden bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden animate-slide-up">
+                    <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                        <span class="text-xs font-bold tracking-widest text-slate-400 uppercase">Basic Classification</span>
+                        <div id="basicResult" class="text-2xl font-bold text-primary mt-1"></div>
+                        <div id="gtcWarning" class="hidden mt-3 bg-yellow-50 text-yellow-800 p-3 rounded-lg text-sm border border-yellow-200">
+                            <strong>Clinical Note:</strong> Tonic-clonic seizures carry the highest risk of injury and SUDEP regardless of onset type.
+                        </div>
+                    </div>
+
+                    <div class="p-6 border-b border-slate-100">
+                        <span class="text-xs font-bold tracking-widest text-slate-400 uppercase">Expanded Classification</span>
+                        <div id="expandedResult" class="text-lg font-medium text-slate-700 mt-2 leading-relaxed"></div>
+                        <p class="text-sm text-slate-400 mt-2 italic">* Arrows (➔) indicate chronological sequence.</p>
+                    </div>
+
+                    <div class="p-6">
+                        <span class="text-xs font-bold tracking-widest text-slate-400 uppercase">Lateralizing Signs</span>
+                        <ul id="lateralizationList" class="mt-4 space-y-1"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUIZ SCREEN -->
+            <div id="quiz" class="view-section animate-fade-in h-full">
                 
-                <div class="controls">
-                    <button id="startBtn" class="action-btn" onclick="nextQuestion()">Start Quiz</button>
-                    <button id="nextBtn" class="action-btn" onclick="nextQuestion()" style="display:none;">Next Question</button>
+                <!-- Quiz Selection Menu -->
+                <div id="quizMenu" class="h-full">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold text-primary">Select Assessment Module</h2>
+                        <p class="text-slate-500 mt-2">Choose a specialized module to test your diagnostic skills.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Module 1 -->
+                        <div onclick="startQuiz('classification')" class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer border-l-8 border-secondary group relative overflow-hidden">
+                            <div class="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                <svg width="100" height="100" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-primary mb-2 flex items-center gap-2">
+                                <span>📋</span> ILAE Classification Test
+                            </h3>
+                            <p class="text-slate-500 text-sm mb-4">Focuses on the 2025 framework, seizure types, and consciousness states.</p>
+                        </div>
+
+                        <!-- Module 2 -->
+                        <div onclick="startQuiz('semiology')" class="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer border-l-8 border-primary group relative overflow-hidden">
+                            <div class="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                <svg width="100" height="100" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-primary mb-2 flex items-center gap-2">
+                                <span>🎯</span> Seizure Semiology Test
+                            </h3>
+                            <p class="text-slate-500 text-sm mb-4">Focuses on localization, lateralization, and brain regions.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Quiz Interface -->
+                <div id="quizActive" class="hidden flex flex-col h-full">
+                    <div class="flex-1 bg-white rounded-xl shadow-lg p-6 md:p-8 flex flex-col relative">
+                        
+                        <!-- Top Bar -->
+                        <div class="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+                            <button onclick="showQuizMenu()" class="text-slate-400 hover:text-primary text-sm font-bold flex items-center gap-1">
+                                ← Modules
+                            </button>
+                            <span id="quizTitle" class="text-sm font-bold text-primary uppercase tracking-wider bg-primary/5 px-3 py-1 rounded"></span>
+                            <span id="qStreak" class="text-sm font-bold text-secondary">Streak: 0 🔥</span>
+                        </div>
+
+                        <!-- Question Area -->
+                        <div class="flex flex-col flex-1">
+                            <div class="mb-2">
+                                <span id="qCount" class="text-xs font-bold text-slate-400 uppercase tracking-widest">Question 1</span>
+                            </div>
+                            
+                            <h3 id="qText" class="text-xl font-bold text-slate-800 mb-8 leading-relaxed"></h3>
+
+                            <div id="qOptions" class="space-y-3 flex-1 overflow-y-auto"></div>
+
+                            <div id="qFeedback" class="hidden mt-6 pt-6 border-t border-slate-100 flex justify-between items-center animate-slide-up">
+                                <div id="feedbackText" class="text-lg font-bold"></div>
+                                <button onclick="nextQuestion()" class="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-900 transition-colors">Next</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+
         </div>
-    </div>
+    </main>
 
-</div>
-
-<footer>
-    Adopted from 2025 ILAE Classifications, and to be used strictly for educational purposes.
-</footer>
-
-<script>
-    // NAVIGATION
-    function showPage(pageId) {
-        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-        document.getElementById(pageId).classList.add('active');
-        const homeBtn = document.getElementById('homeBtn');
-        const body = document.body;
-        
-        if (pageId === 'landing') {
-            homeBtn.style.display = 'none';
-            body.classList.add('landing-mode');
-        } else {
-            homeBtn.style.display = 'block';
-            body.classList.remove('landing-mode');
-        }
-    }
-
-    /**
-     * ILAE 2025 LOGIC ENGINE
-     */
-
-    // Dictionary: Separating Subjective (Aura) vs Observable (Signs)
-    const dictionary = [
-        // --- AURAS (Subjective - Non-observable) ---
-        { keys: ["epigast", "stomach", "rising", "nausea", "abdominal", "butterfl", "belli"], term: "Abdominal rising sensation", cat: "Autonomic Aura", type: "aura", subtype: "autonomic" },
-        { keys: ["palpitat", "heart", "tachycardia"], term: "Palpitations", cat: "Autonomic Aura", type: "aura", subtype: "autonomic" },
-        { keys: ["chest tight", "breath"], term: "Chest tightness", cat: "Autonomic Aura", type: "aura", subtype: "autonomic" },
-        
-        // Visual Aura
-        { keys: ["visu", "blur", "flash", "light", "spot", "color", "hallucinat", "blind", "vision", "seeing", "multicolor", "hemifield"], term: "Visual hallucinations/flashes", cat: "Visual Aura", type: "aura", subtype: "visual" },
-        { keys: ["distort", "micropsia", "macropsia"], term: "Visual distortions", cat: "Visual Aura", type: "aura", subtype: "visual" },
-        
-        // Somatosensory Aura
-        { keys: ["tingl", "numb", "pin", "needle", "electric"], term: "Paresthesia (tingling/numbness)", cat: "Somatosensory Aura", type: "aura", subtype: "somatosensory" },
-        { keys: ["pain", "burn", "hurt"], term: "Somatic pain", cat: "Somatosensory Aura", type: "aura", subtype: "somatosensory" },
-        
-        // Auditory Aura
-        { keys: ["auditory", "hearing voice", "heard voice", "buzz", "ringing", "music"], term: "Auditory hallucinations/buzzing", cat: "Auditory Aura", type: "aura", subtype: "auditory" },
-        
-        // Cognitive/Emotional Aura
-        { keys: ["deja", "déjà"], term: "Déjà vu", cat: "Cognitive Aura", type: "aura", subtype: "cognitive" },
-        { keys: ["jamais"], term: "Jamais vu", cat: "Cognitive Aura", type: "aura", subtype: "cognitive" },
-        { keys: ["dream", "detach", "realiti", "derealiz"], term: "Derealization feeling", cat: "Cognitive Aura", type: "aura", subtype: "cognitive" },
-        { keys: ["depersonaliz", "out of body"], term: "Depersonalization", cat: "Cognitive Aura", type: "aura", subtype: "cognitive" },
-        { keys: ["anxi", "panic", "nervous"], term: "Anxiety", cat: "Emotional Aura", type: "aura", subtype: "emotional" },
-        { keys: ["fear", "scared", "terrified"], term: "Fear", cat: "Emotional Aura", type: "aura", subtype: "emotional" },
-        { keys: ["joy", "ecsta", "bliss", "euphoria"], term: "Pleasant euphoria", cat: "Emotional Aura", type: "aura", subtype: "emotional" },
-        { keys: ["sadness", "depress", "crying", "dacrystic"], term: "Sudden sadness", cat: "Emotional Aura", type: "aura", subtype: "emotional" },
-        
-        // Generic / Vague Aura (Updated)
-        { keys: ["aura", "funny feel", "strange sensation", "vague sensation", "indescribable", "poorly described"], term: "Indescribable aura", cat: "Nonspecific Aura", type: "aura_generic", subtype: "focal" },
-
-        // --- OBSERVABLE MANIFESTATIONS (Ictal) ---
-        // Autonomic Observable
-        { keys: ["flush", "hot", "warm", "sweat"], term: "Heat flushing/Sweating", cat: "Autonomic signs", type: "ictal", subtype: "autonomic" },
-        { keys: ["goosebump", "piloerect", "hair stand"], term: "Piloerection", cat: "Autonomic signs", type: "ictal", subtype: "autonomic" },
-        { keys: ["pallor"], term: "Pallor", cat: "Autonomic signs", type: "ictal", subtype: "autonomic" },
-        
-        // Motor
-        { keys: ["speech arrest", "can't speak", "unable to speak", "aphas", "paraphas", "word finding"], term: "Speech arrest/Aphasia", cat: "Aphasic seizure", type: "ictal", subtype: "aphasic" },
-        { keys: ["laugh", "gelastic", "giggle"], term: "Gelastic (Laughter)", cat: "Emotional (Gelastic)", type: "ictal", subtype: "emotional" },
-        { keys: ["lip", "smack", "chew", "swallow", "lick"], term: "Lip smacking/Chewing", cat: "Oroalimentary automatisms", type: "ictal", subtype: "automotor" },
-        { keys: ["fumb", "pick", "undress", "rub", "manual", "grasp", "fidget", "manipulat"], term: "Hand fumbling/picking", cat: "Manual automatisms", type: "ictal", subtype: "automotor" },
-        { keys: ["walk", "run", "wander", "bicyc", "pedal", "thrash", "agitated", "hypermotor"], term: "Hyperkinetic movements", cat: "Hyperkinetic", type: "ictal", subtype: "hypermotor" },
-        { keys: ["stif", "rigid", "tonic", "postur"], term: "Tonic stiffening", cat: "Tonic seizure", type: "ictal_tonic", subtype: "tonic" },
-        { keys: ["figure of 4", "figure of four"], term: "Figure of 4 posturing", cat: "Asymmetric dystonic posturing", type: "ictal", subtype: "tonic" },
-        { keys: ["fenc"], term: "Fencing posture", cat: "Asymmetric tonic", type: "ictal", subtype: "tonic" },
-        { keys: ["dystoni"], term: "Dystonic posturing", cat: "Dystonia", type: "ictal_dystonia", subtype: "tonic" },
-        { keys: ["head turn", "look to", "version", "versive", "deviat"], term: "Head deviation", cat: "Versive seizure", type: "ictal_side", subtype: "versive" },
-        { keys: ["eye deviat"], term: "Eye deviation", cat: "Versive seizure", type: "ictal", subtype: "versive" },
-        { keys: ["clonic", "jerk", "twitch", "shak"], term: "Clonic jerking", cat: "Clonic seizure", type: "ictal", subtype: "clonic" },
-        { keys: ["myoclon", "shock", "lightn"], term: "Myoclonic jerks", cat: "Myoclonic seizure", type: "ictal", subtype: "myoclonic" },
-        { keys: ["eyelid", "blink", "flutter"], term: "Eyelid myoclonia", cat: "Eyelid myoclonia", type: "ictal", subtype: "myoclonic" },
-        { keys: ["atonic", "drop", "fall", "limp", "loss of tone", "nod", "unable to move", "negative motor"], term: "Atonic/Negative motor", cat: "Atonic seizure", type: "ictal", subtype: "atonic" },
-        { keys: ["spasm", "jackknife"], term: "Epileptic spasms", cat: "Epileptic spasms", type: "ictal", subtype: "epileptic spasm" },
-        { keys: ["arrest", "paus", "freez", "stare", "staring", "blank", "motionless"], term: "Behavioral arrest/Staring", cat: "Behavioral arrest", type: "ictal_stare", subtype: "focal" },
-        { keys: ["vomit", "emesis"], term: "Ictal vomiting", cat: "Autonomic (Vomiting)", type: "ictal", subtype: "autonomic" },
-        { keys: ["scream", "shout", "vocaliz", "cry", "crying"], term: "Ictal cry/Vocalization", cat: "Vocalization", type: "ictal", subtype: "vocalization" },
-        
-        // Specific Ictal Pouting
-        { keys: ["pout", "chapeau"], term: "Ictal pouting (chapeau de gendarme)", cat: "Motor signs", type: "ictal", subtype: "motor" },
-
-        // GTC
-        { keys: ["tonic clonic", "tonic-clonic", "grand mal", "convuls", "btc", "fbtc"], term: "Bilateral tonic-clonic convulsions", cat: "Bilateral tonic-clonic", type: "ictal_gtc", subtype: "tonic-clonic" },
-        
-        // Complex Ext/Flex
-        { keys: ["exten", "flex"], term: "Asymmetric tonic", cat: "Asymmetric tonic", type: "ictal_complex", subtype: "tonic" },
-
-        // --- POSTICTAL (Sequence End) ---
-        { keys: ["confus", "disorient", "reorient"], term: "Postictal confusion", cat: "Postictal", type: "postictal", subtype: "none" },
-        { keys: ["sleep", "drowsy", "tired"], term: "Postictal sleep", cat: "Postictal", type: "postictal", subtype: "none" },
-        { keys: ["weakness", "paresis", "paralysis", "hemiparesis"], term: "Postictal paresis", cat: "Postictal", type: "postictal", subtype: "none" },
-        { keys: ["nose wip", "wip"], term: "Nose wiping", cat: "Postictal", type: "postictal", subtype: "none" }
-    ];
-
-    function extractSide(text, index) {
-        const contextWindow = 50; 
-        const start = Math.max(0, index - contextWindow);
-        const end = Math.min(text.length, index + contextWindow);
-        const substring = text.substring(start, end).toLowerCase();
-        
-        if (substring.includes("right")) return "right";
-        if (substring.includes("left")) return "left";
-        return "";
-    }
-
-    function isNegated(text, index) {
-        const contextStart = Math.max(0, index - 25); 
-        const context = text.substring(contextStart, index).toLowerCase();
-        const negations = ["no ", "without ", "denies ", "did not have ", "absence of "];
-        const trimmedContext = context.trim();
-        for (let neg of negations) {
-            if (trimmedContext.endsWith(neg.trim())) return true;
-        }
-        return false;
-    }
-
-    function check(text, keywords) {
-        return keywords.some(k => text.includes(k));
-    }
-
-    function generateClassification() {
-        const rawText = document.getElementById('seizureInput').value;
-        if (!rawText.trim()) {
-            alert("Please enter a seizure description.");
-            return;
-        }
-
-        const text = rawText.toLowerCase();
-
-        // --- STEP 1: PARSE SEMIOLOGY ---
-        let matches = [];
-        let hasSpecificAura = false;
-        
-        // Pre-scan for specific aura
-        dictionary.forEach(entry => {
-            if (entry.type === "aura" && entry.subtype !== "focal") {
-                if (entry.keys.some(k => {
-                    const idx = text.indexOf(k);
-                    return idx !== -1 && !isNegated(text, idx);
-                })) {
-                    hasSpecificAura = true;
-                }
+    <script>
+        // --- NAVIGATION LOGIC ---
+        function navigateTo(screenId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            const homeBtn = document.getElementById('homeBtn');
+            if (screenId === 'landing') {
+                homeBtn.classList.add('hidden');
+                // Reset Quiz View if returning home
+                showQuizMenu();
+            } else {
+                homeBtn.classList.remove('hidden');
             }
-        });
+            window.scrollTo(0, 0);
+        }
 
-        // Match extraction
-        dictionary.forEach(entry => {
-            entry.keys.forEach(key => {
-                const idx = text.indexOf(key);
-                if (idx !== -1) {
-                    if (isNegated(text, idx)) return;
-                    if (entry.type === "aura_generic" && hasSpecificAura) return;
-                    if (entry.type === "ictal_complex") return; 
+        function showQuizMenu() {
+            document.getElementById('quizMenu').classList.remove('hidden');
+            document.getElementById('quizActive').classList.add('hidden');
+        }
 
-                    const alreadyFound = matches.find(m => m.term === entry.term);
-                    if (!alreadyFound) {
-                        let finalTerm = entry.term;
-                        let finalCat = entry.cat;
-                        const side = extractSide(text, idx);
-                        
-                        if (entry.type === "ictal_side") {
-                             if (side) finalTerm = `Head deviation to the ${side}`;
-                        }
-                        else if (entry.type === "ictal_dystonia") {
-                             if (side) finalTerm = `${side.charAt(0).toUpperCase() + side.slice(1)} arm posturing`;
-                        }
-                        else if (entry.type === "ictal_tonic") {
-                             if (side && !finalTerm.includes("stiffening")) finalTerm = `${side.charAt(0).toUpperCase() + side.slice(1)} arm tonic`;
-                        }
-                        else if (entry.cat === "Clonic seizure" && side) {
-                            finalTerm = `Clonic jerking of the ${side} side`;
-                        }
-                        else if (entry.cat === "Postictal") {
-                            if (side && entry.term.includes("paresis")) finalTerm = `Postictal ${side} paresis`;
-                        }
-                        if (key === "unable to move" || key === "negative motor") {
-                            finalTerm = "Negative motor phenomenon";
-                        }
+        // --- ILAE CLASSIFICATION LOGIC (CLASSIFIER) ---
+        
+        // Dictionary Definition
+        const dictionary = [
+            // --- Specific Eye/Head Logic (Priority High) ---
+            { keys: ["head and eye", "eyes and head", "head and eyes"], term: "Head and eye deviation", cat: "Versive seizure", type: "ictal_side_both", subtype: "versive" },
+            { keys: ["head turn", "head deviat", "head version", "head to"], term: "Head deviation", cat: "Versive seizure", type: "ictal_side_head", subtype: "versive" },
+            { keys: ["eye deviat", "eyes deviat", "eyes turn", "eyes look", "looking to", "gaze"], term: "Eye deviation", cat: "Versive seizure", type: "ictal_side_eyes", subtype: "versive" },
 
-                        matches.push({
-                            index: idx,
-                            term: finalTerm,
-                            cat: finalCat,
-                            type: entry.type,
-                            subtype: entry.subtype
-                        });
+            // --- AURAS ---
+            { keys: ["epigast", "stomach", "rising", "nausea", "abdominal", "butterfl", "belli"], term: "Abdominal rising sensation", cat: "Autonomic Aura", type: "aura", subtype: "autonomic" },
+            { keys: ["palpitat", "heart", "tachycardia"], term: "Palpitations", cat: "Autonomic Aura", type: "aura", subtype: "autonomic" },
+            { keys: ["chest tight", "breath"], term: "Chest tightness", cat: "Autonomic Aura", type: "aura", subtype: "autonomic" },
+            { keys: ["visu", "blur", "flash", "light", "spot", "color", "hallucinat", "blind", "vision", "seeing", "multicolor", "hemifield"], term: "Visual hallucinations/flashes", cat: "Visual Aura", type: "aura", subtype: "visual" },
+            { keys: ["distort", "micropsia", "macropsia"], term: "Visual distortions", cat: "Visual Aura", type: "aura", subtype: "visual" },
+            { keys: ["tingl", "numb", "pin", "needle", "electric"], term: "Paresthesia (tingling/numbness)", cat: "Somatosensory Aura", type: "aura", subtype: "somatosensory" },
+            { keys: ["pain", "burn", "hurt"], term: "Somatic pain", cat: "Somatosensory Aura", type: "aura", subtype: "somatosensory" },
+            { keys: ["auditory", "hearing voice", "heard voice", "buzz", "ringing", "music"], term: "Auditory hallucinations/buzzing", cat: "Auditory Aura", type: "aura", subtype: "auditory" },
+            { keys: ["deja", "déjà"], term: "Déjà vu", cat: "Cognitive Aura", type: "aura", subtype: "cognitive" },
+            { keys: ["jamais"], term: "Jamais vu", cat: "Cognitive Aura", type: "aura", subtype: "cognitive" },
+            { keys: ["dream", "detach", "realiti", "derealiz"], term: "Derealization feeling", cat: "Cognitive Aura", type: "aura", subtype: "cognitive" },
+            { keys: ["depersonaliz", "out of body"], term: "Depersonalization", cat: "Cognitive Aura", type: "aura", subtype: "cognitive" },
+            { keys: ["anxi", "panic", "nervous"], term: "Anxiety", cat: "Emotional Aura", type: "aura", subtype: "emotional" },
+            { keys: ["fear", "scared", "terrified"], term: "Fear", cat: "Emotional Aura", type: "aura", subtype: "emotional" },
+            { keys: ["joy", "ecsta", "bliss", "euphoria"], term: "Pleasant euphoria", cat: "Emotional Aura", type: "aura", subtype: "emotional" },
+            { keys: ["sadness", "depress", "crying", "dacrystic"], term: "Sudden sadness", cat: "Emotional Aura", type: "aura", subtype: "emotional" },
+            { keys: ["aura", "funny feel", "strange sensation", "vague sensation", "indescribable", "poorly described"], term: "Indescribable aura", cat: "Nonspecific Aura", type: "aura_generic", subtype: "focal" },
+
+            // --- ICTAL ---
+            { keys: ["flush", "hot", "warm", "sweat"], term: "Heat flushing/Sweating", cat: "Autonomic signs", type: "ictal", subtype: "autonomic" },
+            { keys: ["goosebump", "piloerect", "hair stand"], term: "Piloerection", cat: "Autonomic signs", type: "ictal", subtype: "autonomic" },
+            { keys: ["pallor"], term: "Pallor", cat: "Autonomic signs", type: "ictal", subtype: "autonomic" },
+            { keys: ["speech arrest", "can't speak", "unable to speak", "aphas", "paraphas", "word finding"], term: "Speech arrest/Aphasia", cat: "Aphasic seizure", type: "ictal", subtype: "aphasic" },
+            { keys: ["laugh", "gelastic", "giggle"], term: "Gelastic (Laughter)", cat: "Emotional (Gelastic)", type: "ictal", subtype: "emotional" },
+            { keys: ["lip", "smack", "chew", "swallow", "lick"], term: "Lip smacking/Chewing", cat: "Oroalimentary automatisms", type: "ictal", subtype: "automotor" },
+            { keys: ["fumb", "pick", "undress", "rub", "manual", "grasp", "fidget", "manipulat"], term: "Hand fumbling/picking", cat: "Manual automatisms", type: "ictal", subtype: "automotor" },
+            { keys: ["walk", "run", "wander", "bicyc", "pedal", "thrash", "agitated", "hypermotor"], term: "Hyperkinetic movements", cat: "Hyperkinetic", type: "ictal", subtype: "hypermotor" },
+            { keys: ["stif", "rigid", "tonic", "postur"], term: "Tonic stiffening", cat: "Tonic seizure", type: "ictal_tonic", subtype: "tonic" },
+            { keys: ["figure of 4", "figure of four"], term: "Figure of 4 posturing", cat: "Asymmetric dystonic posturing", type: "ictal", subtype: "tonic" },
+            { keys: ["fenc"], term: "Fencing posture", cat: "Asymmetric tonic", type: "ictal", subtype: "tonic" },
+            { keys: ["dystoni"], term: "Dystonic posturing", cat: "Dystonia", type: "ictal_dystonia", subtype: "tonic" },
+            
+            { keys: ["clonic", "jerk", "twitch", "shak"], term: "Clonic jerking", cat: "Clonic seizure", type: "ictal", subtype: "clonic" },
+            { keys: ["myoclon", "shock", "lightn"], term: "Myoclonic jerks", cat: "Myoclonic seizure", type: "ictal", subtype: "myoclonic" },
+            { keys: ["eyelid", "blink", "flutter"], term: "Eyelid myoclonia", cat: "Eyelid myoclonia", type: "ictal", subtype: "myoclonic" },
+            { keys: ["atonic", "drop", "fall", "limp", "loss of tone", "nod", "unable to move", "negative motor"], term: "Atonic/Negative motor", cat: "Atonic seizure", type: "ictal", subtype: "atonic" },
+            { keys: ["spasm", "jackknife"], term: "Epileptic spasms", cat: "Epileptic spasms", type: "ictal", subtype: "epileptic spasm" },
+            { keys: ["arrest", "paus", "freez", "stare", "staring", "blank", "motionless"], term: "Behavioral arrest/Staring", cat: "Behavioral arrest", type: "ictal_stare", subtype: "focal" },
+            { keys: ["vomit", "emesis"], term: "Ictal vomiting", cat: "Autonomic (Vomiting)", type: "ictal", subtype: "autonomic" },
+            { keys: ["scream", "shout", "vocaliz", "cry", "crying"], term: "Ictal cry/Vocalization", cat: "Vocalization", type: "ictal", subtype: "vocalization" },
+            { keys: ["pout", "chapeau"], term: "Ictal pouting (chapeau de gendarme)", cat: "Motor signs", type: "ictal", subtype: "motor" },
+            { keys: ["tonic clonic", "tonic-clonic", "grand mal", "convuls", "btc", "fbtc"], term: "Bilateral tonic-clonic convulsions", cat: "Bilateral tonic-clonic", type: "ictal_gtc", subtype: "tonic-clonic" },
+
+            // --- POSTICTAL ---
+            { keys: ["confus", "disorient", "reorient"], term: "Postictal confusion", cat: "Postictal", type: "postictal", subtype: "none" },
+            { keys: ["sleep", "drowsy", "tired"], term: "Postictal sleep", cat: "Postictal", type: "postictal", subtype: "none" },
+            { keys: ["weakness", "paresis", "paralysis", "hemiparesis"], term: "Postictal paresis", cat: "Postictal", type: "postictal", subtype: "none" },
+            { keys: ["nose wip", "wip"], term: "Nose wiping", cat: "Postictal", type: "postictal", subtype: "none" }
+        ];
+
+        function extractSide(text, index) {
+            const contextWindow = 50; 
+            const start = Math.max(0, index - contextWindow);
+            const end = Math.min(text.length, index + contextWindow);
+            const substring = text.substring(start, end).toLowerCase();
+            if (substring.includes("right")) return "right";
+            if (substring.includes("left")) return "left";
+            return "";
+        }
+
+        function isNegated(text, index) {
+            const contextStart = Math.max(0, index - 25); 
+            const context = text.substring(contextStart, index).toLowerCase();
+            const negations = ["no ", "without ", "denies ", "did not have ", "absence of "];
+            const trimmedContext = context.trim();
+            for (let neg of negations) {
+                if (trimmedContext.endsWith(neg.trim())) return true;
+            }
+            return false;
+        }
+
+        function check(text, keywords) {
+            return keywords.some(k => text.includes(k));
+        }
+
+        function runClassification() {
+            const rawText = document.getElementById('seizureInput').value;
+            if (!rawText.trim()) return;
+            const text = rawText.toLowerCase();
+
+            // 1. Find all potential matches
+            let allMatches = [];
+            let hasSpecificAura = false;
+            
+            // Check specific aura first for global context
+            dictionary.forEach(entry => {
+                if (entry.type === "aura" && entry.subtype !== "focal") {
+                    if (entry.keys.some(k => text.includes(k) && !isNegated(text, text.indexOf(k)))) {
+                        hasSpecificAura = true;
                     }
                 }
             });
-        });
 
-        // Handle Asymmetric Tonic
-        const hasExt = check(text, ["exten"]);
-        const hasFlex = check(text, ["flex"]);
-        if (hasExt || hasFlex) {
-            let phrase = "";
-            let extSide = "";
-            let flexSide = "";
-            
-            const extIdx = text.indexOf("exten");
-            if (extIdx !== -1 && !isNegated(text, extIdx)) extSide = extractSide(text, extIdx);
-            
-            const flexIdx = text.indexOf("flex");
-            if (flexIdx !== -1 && !isNegated(text, flexIdx)) flexSide = extractSide(text, flexIdx);
-            
-            if (hasExt && hasFlex) {
-                phrase = "Asymmetric posturing";
-                let parts = [];
-                if (extSide) parts.push(`extension of ${extSide} arm`);
-                else parts.push("extension of arm");
-                if (flexSide) parts.push(`flexion of ${flexSide} arm`);
-                else parts.push("flexion of arm");
-                phrase += ` with ${parts.join(", ")}`;
-            } else if (hasExt) {
-                phrase = extSide ? `Extension of ${extSide} arm` : "Tonic extension";
-            } else if (hasFlex) {
-                phrase = flexSide ? `Flexion of ${flexSide} arm` : "Tonic flexion";
-            }
+            dictionary.forEach(entry => {
+                entry.keys.forEach(key => {
+                    let searchPos = 0;
+                    while (true) {
+                        const idx = text.indexOf(key, searchPos);
+                        if (idx === -1) break;
+                        
+                        if (!isNegated(text, idx) && !(entry.type === "aura_generic" && hasSpecificAura)) {
+                             // Extract side once
+                             const side = extractSide(text, idx);
+                             let finalTerm = entry.term;
 
-            if (phrase) {
-                matches.push({
-                    index: (extIdx !== -1 ? extIdx : flexIdx),
-                    term: phrase,
-                    cat: "Asymmetric tonic",
-                    type: "ictal",
-                    subtype: "tonic"
+                             // Logic for specific types
+                             if (entry.type === "ictal_side_both") {
+                                 finalTerm = side ? `Head and eye deviation to the ${side}` : "Head and eye deviation";
+                             } else if (entry.type === "ictal_side_head") {
+                                 finalTerm = side ? `Head deviation to the ${side}` : "Head deviation";
+                             } else if (entry.type === "ictal_side_eyes") {
+                                 finalTerm = side ? `Eye deviation to the ${side}` : "Eye deviation";
+                             } else if (entry.type === "ictal_dystonia") {
+                                 if (side) finalTerm = `${side.charAt(0).toUpperCase() + side.slice(1)} arm posturing`;
+                             } else if (entry.type === "ictal_tonic") {
+                                 if (side && !finalTerm.includes("stiffening")) finalTerm = `${side.charAt(0).toUpperCase() + side.slice(1)} arm tonic`;
+                             } else if (entry.cat === "Clonic seizure" && side) {
+                                 finalTerm = `Clonic jerking of the ${side} side`;
+                             }
+
+                             if (key === "unable to move" || key === "negative motor") finalTerm = "Negative motor phenomenon";
+
+                             allMatches.push({
+                                 start: idx,
+                                 end: idx + key.length,
+                                 term: finalTerm,
+                                 cat: entry.cat,
+                                 type: entry.type,
+                                 subtype: entry.subtype
+                             });
+                        }
+                        searchPos = idx + 1;
+                    }
                 });
+            });
+
+            // 2. Handle Asymmetric Tonic (Ext/Flex) logic separate detection
+            const hasExt = check(text, ["exten"]);
+            const hasFlex = check(text, ["flex"]);
+            if (hasExt || hasFlex) {
+                let phrase = "";
+                let extSide = "";
+                let flexSide = "";
+                const extIdx = text.indexOf("exten");
+                if (extIdx !== -1 && !isNegated(text, extIdx)) extSide = extractSide(text, extIdx);
+                const flexIdx = text.indexOf("flex");
+                if (flexIdx !== -1 && !isNegated(text, flexIdx)) flexSide = extractSide(text, flexIdx);
+                
+                if (hasExt && hasFlex) {
+                    let parts = [];
+                    if (extSide) parts.push(`extension of ${extSide} arm`);
+                    else parts.push("extension of arm");
+                    if (flexSide) parts.push(`flexion of ${flexSide} arm`);
+                    else parts.push("flexion of arm");
+                    phrase = `Asymmetric posturing with ${parts.join(", ")}`;
+                } else if (hasExt) {
+                    phrase = extSide ? `Extension of ${extSide} arm` : "Tonic extension";
+                } else if (hasFlex) {
+                    phrase = flexSide ? `Flexion of ${flexSide} arm` : "Tonic flexion";
+                }
+                
+                if (phrase) {
+                     const idx = extIdx !== -1 ? extIdx : flexIdx;
+                     allMatches.push({
+                        start: idx,
+                        end: idx + 5, // approx
+                        term: phrase,
+                        cat: "Asymmetric tonic",
+                        type: "ictal",
+                        subtype: "tonic"
+                     });
+                }
             }
-        }
 
-        matches.sort((a, b) => a.index - b.index);
+            // 3. Filter overlaps (Longest wins)
+            allMatches.sort((a, b) => (b.end - b.start) - (a.end - a.start));
+            let acceptedMatches = [];
+            
+            allMatches.forEach(m => {
+                // Check if this match overlaps with any accepted match
+                const isOverlapping = acceptedMatches.some(acc => {
+                    return (m.start < acc.end && m.end > acc.start);
+                });
+                if (!isOverlapping) {
+                    // Check for duplicate terms (e.g. found "head turn" twice)
+                    if (!acceptedMatches.some(acc => acc.term === m.term)) {
+                        acceptedMatches.push(m);
+                    }
+                }
+            });
 
-        // --- STEP 2: DETERMINE CORE PARAMETERS ---
-        let onset = "Unknown";
-        let isFocal = false;
+            acceptedMatches.sort((a, b) => a.start - b.start);
 
-        // General keyword checks
-        if (check(text, ["focal", "aura", "epigast", "one side", "right", "left", "hemi", "unilateral", "asymmetric", "automat", "lip smack", "start", "onset", "version", "versive", "postur", "flex", "exten", "visual", "auditory", "taste", "smell", "feeling", "sensation"])) {
-            onset = "Focal";
-            isFocal = true;
-        }
-        
-        if (check(text, ["generalized", "generalised", "absence", "3hz", "myoclon", "bilateral synchronous", "all limb", "whole body"])) {
-            if (!isFocal || check(text, ["absence", "juvenile", "jme", "cae"])) onset = "Generalized";
-        }
-        
-        // Consciousness
-        let consciousness = "Preserved";
-        if (check(text, ["unrespon", "unrepon", "no recal", "amne", "confus", "lost", "blank", "passed out", "unconscious", "impaired", "unaware", "loss of awareness", "stare", "staring", "no respon", "not respon", "lapse of awareness", "behavioral arrest"])) {
-            consciousness = "Impaired";
-        }
+            // 4. Determine Classification
+            let onset = "Unknown";
+            let isFocal = false;
 
-        // Observable
-        let hasObservable = false;
-        const hasMotorSigns = matches.some(m => m.type.startsWith("ictal"));
-        if (hasMotorSigns || consciousness === "Impaired") {
-            hasObservable = true;
-        }
-        if (matches.every(m => m.type === "aura" || m.type === "aura_generic") && consciousness === "Preserved") {
-            hasObservable = false;
-        }
-
-        let evolvesToBTC = false;
-        if (matches.some(m => m.type === "ictal_gtc") || check(text, ["secondary gen", "spread to bilat", "convuls", "fbtc"])) {
-            evolvesToBTC = true;
-        }
-        
-        // --- KEY LOGIC UPDATE FOR FOCAL TO BILATERAL ---
-        // 1. Explicit Focal Onset (Dictionary matches for Aura/Focal signs)
-        if (isFocal && evolvesToBTC) {
-            onset = "Focal";
-        }
-        // 2. Sequence implied by "THEN" or "FOLLOWED BY" even if signs are vague
-        else if (evolvesToBTC && (text.includes(" then ") || text.includes("followed by"))) {
-            // Check if there's text BEFORE the BTC part. If so, assume Focal-to-Bilateral.
-            // (Unless it's just "Generalized seizure then btc")
-            onset = "Focal";
-            isFocal = true;
-        }
-        // 3. Strict Unknown: No focal signs, only BTC mentioned
-        else if (!isFocal && evolvesToBTC && onset !== "Generalized") {
-            onset = "Unknown";
-        }
-
-        // --- STEP 3: SUBTYPE NAMING ---
-        let subtypeName = "";
-        const motorTypes = ["hypermotor", "gelastic", "aphasic", "epileptic spasm", "atonic", "myoclonic", "clonic", "tonic"];
-        for (let type of motorTypes) {
-            if (matches.some(m => m.subtype === type || (m.cat && m.cat.toLowerCase().includes(type)))) {
-                subtypeName = type;
-                if (subtypeName === "gelastic") subtypeName = "emotional"; 
-                if (subtypeName === "negative motor") subtypeName = "negative motor";
-                break;
+            if (check(text, ["focal", "aura", "epigast", "one side", "right", "left", "hemi", "unilateral", "asymmetric", "automat", "lip smack", "start", "onset", "version", "versive", "postur", "flex", "exten", "visual", "auditory", "taste", "smell", "feeling", "sensation"])) {
+                onset = "Focal";
+                isFocal = true;
             }
-        }
-        if (!subtypeName && onset === "Focal") {
-            const auraTypes = ["autonomic", "visual", "somatosensory", "auditory", "cognitive", "emotional"];
-            for (let type of auraTypes) {
-                if (matches.some(m => m.subtype === type)) {
+            if (check(text, ["generalized", "generalised", "absence", "3hz", "myoclon", "bilateral synchronous", "all limb", "whole body"])) {
+                if (!isFocal || check(text, ["absence", "juvenile", "jme", "cae"])) onset = "Generalized";
+            }
+
+            let consciousness = "Preserved";
+            if (check(text, ["unrespon", "unrepon", "no recal", "amne", "confus", "lost", "blank", "passed out", "unconscious", "impaired", "unaware", "loss of awareness", "stare", "staring", "no respon", "not respon", "lapse of awareness", "behavioral arrest"])) {
+                consciousness = "Impaired";
+            }
+
+            let hasObservable = false;
+            const hasMotorSigns = acceptedMatches.some(m => m.type.startsWith("ictal"));
+            if (hasMotorSigns || consciousness === "Impaired") hasObservable = true;
+            if (acceptedMatches.every(m => m.type.startsWith("aura")) && consciousness === "Preserved") hasObservable = false;
+
+            let evolvesToBTC = false;
+            if (acceptedMatches.some(m => m.type === "ictal_gtc") || check(text, ["secondary gen", "spread to bilat", "convuls", "fbtc"])) {
+                evolvesToBTC = true;
+            }
+
+            // Focal-to-Bilateral Logic
+            if (isFocal && evolvesToBTC) onset = "Focal";
+            else if (evolvesToBTC && (text.includes(" then ") || text.includes("followed by"))) {
+                onset = "Focal";
+                isFocal = true;
+            } else if (!isFocal && evolvesToBTC && onset !== "Generalized") {
+                onset = "Unknown";
+            }
+
+            // Subtype Naming
+            let subtypeName = "";
+            const motorTypes = ["hypermotor", "gelastic", "aphasic", "epileptic spasm", "atonic", "myoclonic", "clonic", "tonic"];
+            for (let type of motorTypes) {
+                if (acceptedMatches.some(m => m.subtype === type || (m.cat && m.cat.toLowerCase().includes(type)))) {
                     subtypeName = type;
+                    if (subtypeName === "gelastic") subtypeName = "emotional";
+                    if (subtypeName === "negative motor") subtypeName = "negative motor";
                     break;
                 }
             }
-        }
-        if (subtypeName) {
-            if (subtypeName === "automotor") subtypeName = ""; 
-            else subtypeName += " "; 
-        }
+            if (!subtypeName && onset === "Focal") {
+                const auraTypes = ["autonomic", "visual", "somatosensory", "auditory", "cognitive", "emotional"];
+                for (let type of auraTypes) {
+                    if (acceptedMatches.some(m => m.subtype === type)) {
+                        subtypeName = type;
+                        break;
+                    }
+                }
+            }
+            if (subtypeName) {
+                if (subtypeName === "automotor") subtypeName = "";
+                else subtypeName += " ";
+            }
 
-        // --- STEP 4: BASIC CLASSIFICATION ---
-        let basicClass = "";
-        
-        if (onset === "Generalized") {
-            let genType = "Seizure (Unspecified)";
-            if (check(text, ["absence"])) genType = "Absence Seizure";
-            else if (check(text, ["myoclon"]) && !check(text, ["tonic"])) genType = "Myoclonic Seizure";
-            else if (check(text, ["tonic"]) && !check(text, ["clonic"])) genType = "Tonic Seizure";
-            else if (check(text, ["atonic"])) genType = "Atonic Seizure";
-            else if (check(text, ["negative"])) genType = "Epileptic Negative Myoclonus Seizure";
-            else if (evolvesToBTC) genType = "Tonic-Clonic Seizure";
+            // BASIC Output construction
+            let basicClass = "";
+            if (onset === "Generalized") {
+                let genType = "Seizure (Unspecified)";
+                if (check(text, ["absence"])) genType = "Absence Seizure";
+                else if (check(text, ["myoclon"]) && !check(text, ["tonic"])) genType = "Myoclonic Seizure";
+                else if (check(text, ["tonic"]) && !check(text, ["clonic"])) genType = "Tonic Seizure";
+                else if (check(text, ["atonic"])) genType = "Atonic Seizure";
+                else if (check(text, ["negative"])) genType = "Epileptic Negative Myoclonus Seizure";
+                else if (evolvesToBTC) genType = "Tonic-Clonic Seizure";
+                basicClass = `Generalized ${genType.toLowerCase()} with observable manifestations.`;
+            } else if (onset === "Focal") {
+                let consString = (consciousness === "Impaired") ? "impaired-consciousness" : "preserved-consciousness";
+                let obsString = hasObservable ? "with observable manifestations" : "without observable manifestations";
+                if (evolvesToBTC) basicClass = "Focal-to-bilateral tonic-clonic seizure.";
+                else basicClass = `Focal ${consString} seizure ${obsString}.`;
+            } else {
+                if (evolvesToBTC) basicClass = "Tonic-clonic seizure, unknown whether focal or generalized.";
+                else if (check(text, ["blank spell", "stare"])) basicClass = "Seizure unknown whether focal or generalized, with unknown state of consciousness.";
+                else basicClass = "Unclassified seizure.";
+            }
+
+            // EXPANDED Output
+            let expandedString = "";
+            let consExp = (consciousness === "Impaired") ? "impaired-consciousness" : "preserved-consciousness";
+            if (onset === "Focal") {
+                if (evolvesToBTC) expandedString = "Focal-to-bilateral tonic-clonic seizure";
+                else expandedString = `Focal ${consExp} ${subtypeName}seizure`;
+            } else {
+                if (onset === "Unknown" && evolvesToBTC) expandedString = "Seizure unknown whether focal or generalized – bilateral tonic-clonic seizure";
+                else {
+                    expandedString = basicClass.replace(/\.$/, "");
+                    expandedString = expandedString.split(" with observable")[0];
+                }
+            }
+
+            let sequenceList = acceptedMatches.map(m => {
+                let desc = `${m.term} (${m.cat})`;
+                if (m.cat.includes("Aura")) desc = m.term + " (" + m.cat.toLowerCase() + ")";
+                if (m.cat === "Oroalimentary automatisms") desc = m.term + " (oroalimentary automatisms)";
+                if (["ictal_side_both", "ictal_side_head", "ictal_side_eyes", "ictal_dystonia", "postictal"].includes(m.type) || m.cat === "Asymmetric tonic" || m.type.startsWith("ictal")) {
+                    desc = m.term;
+                }
+                return desc;
+            });
+
+            if (sequenceList.length > 0) {
+                if (evolvesToBTC) sequenceList = sequenceList.filter(s => !s.toLowerCase().includes("bilateral tonic-clonic"));
+                if (onset === "Unknown" && evolvesToBTC && sequenceList.length > 0) expandedString += ": " + sequenceList.join(", ");
+                else expandedString += " with the following manifestations: " + sequenceList.join(" ➔ ");
+            } else if (onset !== "Unknown" || !evolvesToBTC) {
+                expandedString += " (Insufficient semiology detected)";
+            }
+            expandedString += ".";
+
+            // Lateralization
+            let lateralizingSigns = [];
+            acceptedMatches.forEach(m => {
+                const t = m.term.toLowerCase();
+                if (t.includes('left')) lateralizingSigns.push(`${m.term} (Indicates Right Hemisphere for motor/sensory)`);
+                else if (t.includes('right')) lateralizingSigns.push(`${m.term} (Indicates Left Hemisphere for motor/sensory)`);
+                else if (m.cat.includes('Visual')) lateralizingSigns.push(`${m.term} (Contralateral Occipital)`);
+                else if (m.cat.includes('Somatosensory')) lateralizingSigns.push(`${m.term} (Contralateral Post-Central)`);
+                else if (m.cat.includes('Auditory')) lateralizingSigns.push(`${m.term} (Superior Temporal)`);
+                else if (m.type.startsWith('ictal_side')) lateralizingSigns.push(`${m.term} (Versive - Contralateral Frontal)`);
+            });
+
+            // Render
+            document.getElementById('basicResult').textContent = basicClass;
+            document.getElementById('expandedResult').textContent = expandedString;
             
-            basicClass = `Generalized ${genType.toLowerCase()} with observable manifestations.`;
-        } 
-        else if (onset === "Focal") {
-            let consString = (consciousness === "Impaired") ? "impaired-consciousness" : "preserved-consciousness";
-            let obsString = hasObservable ? "with observable manifestations" : "without observable manifestations";
+            const latList = document.getElementById('lateralizationList');
+            latList.innerHTML = '';
+            if (lateralizingSigns.length > 0) {
+                lateralizingSigns.forEach(sign => {
+                    const li = document.createElement('li');
+                    li.className = "text-slate-600 text-sm flex items-start";
+                    li.innerHTML = `<span class="mr-2 text-primary">•</span>${sign}`;
+                    latList.appendChild(li);
+                });
+            } else {
+                latList.innerHTML = '<li class="text-slate-400 italic">No definite lateralizing signs detected.</li>';
+            }
+
+            document.getElementById('gtcWarning').classList.toggle('hidden', !basicClass.toLowerCase().includes('tonic-clonic'));
+            document.getElementById('resultContainer').classList.remove('hidden');
+        }
+
+        // --- QUIZ DATA ---
+        
+        const classificationCases = [
+            { q: "A 24-year-old patient reports a sudden 'rising sensation' in the stomach. He remains fully aware and can speak during the event. No other movements occur.", a: "Focal Seizure with Preserved Consciousness (Autonomic)", opts: ["Focal Seizure with Impaired Consciousness (Motor)", "Generalized Non-Motor Seizure (Absence)", "Focal Seizure with Preserved Consciousness (Motor)"] },
+            { q: "Patient suddenly stops activity, stares blankly, and performs repetitive chewing movements (oral automatism). He does not respond to questions. Event lasts 45 seconds.", a: "Focal Seizure with Impaired Consciousness (Automatism)", opts: ["Focal Seizure with Preserved Consciousness (Sensory)", "Generalized Seizure with Absences (Atypical)", "Focal Seizure with Preserved Consciousness (Tonic)"] },
+            { q: "During sleep, the patient exhibits explosive, hyperkinetic thrashing of both legs and pelvic thrusting. Duration is 15 seconds.", a: "Focal Motor Seizure (Hyperkinetic)", opts: ["Generalized Tonic-Clonic Seizure (Convulsive)", "Focal Non-Motor Seizure (Behavioral)", "Generalized Non-Motor Seizure (Absence)"] },
+            { q: "Patient sees flashing colored lights in the right visual field for 10 seconds, remains fully aware.", a: "Focal Seizure with Preserved Consciousness (Visual)", opts: ["Focal Seizure with Impaired Consciousness (Visual)", "Generalized Sensory Seizure (Visual)", "Focal Motor Seizure (Clonic)"] },
+            { q: "Sudden onset of rigid stiffening of the left arm and leg while awake. Awareness is preserved.", a: "Focal Motor Seizure (Tonic)", opts: ["Generalized Tonic Seizure (Bilateral)", "Focal Seizure with Impaired Consciousness", "Focal Motor Seizure (Atonic)"] },
+            { q: "A child has a 5-second episode of staring with immediate recovery. Provoked by hyperventilation.", a: "Generalized Non-Motor Seizure (Absence)", opts: ["Focal Seizure with Impaired Consciousness (Cognitive)", "Focal Motor Seizure (Arrest)", "Generalized Motor Seizure (Tonic)"] },
+            { q: "Patient has a sudden loss of muscle tone and falls to the ground. Recovery is immediate.", a: "Generalized (or Focal) Atonic Seizure", opts: ["Focal Motor Seizure (Tonic)", "Generalized Tonic-Clonic Seizure", "Focal Seizure with Impaired Consciousness"] },
+            { q: "Patient experiences sudden intense fear and panic without context, fully aware.", a: "Focal Seizure with Preserved Consciousness (Emotional)", opts: ["Focal Seizure with Impaired Consciousness (Emotional)", "Non-Epileptic Panic Attack", "Focal Motor Seizure (Hyperkinetic)"] },
+            { q: "Rhythmic jerking starts in the right thumb and spreads up the arm to the face. Awareness is preserved.", a: "Focal Motor Seizure (Clonic - Jacksonian)", opts: ["Focal Seizure with Impaired Consciousness", "Generalized Clonic Seizure", "Focal Motor Seizure (Tonic)"] },
+            { q: "Patient wakes up with a bitten tongue and muscle soreness. Partner reports generalized stiffening followed by shaking.", a: "Focal to Bilateral Tonic-Clonic Seizure", opts: ["Focal Motor Seizure (Hyperkinetic)", "Generalized Myoclonic Seizure", "Focal Seizure with Preserved Consciousness"] },
+            { q: "Sudden inability to speak (speech arrest) but can understand and obey commands. Right face twitching is observed.", a: "Focal Seizure with Preserved Consciousness (Clonic)", opts: ["Focal Seizure with Impaired Consciousness (Cognitive)", "Generalized Atonic Seizure", "Focal Seizure with Preserved Consciousness (Sensory)"] },
+            { q: "Brief shock-like jerks of the upper extremities in the morning, dropping objects.", a: "Generalized Myoclonic Seizure", opts: ["Focal Motor Seizure (Tonic)", "Generalized Non-Motor Seizure (Absence)", "Focal Motor Seizure (Clonic)"] },
+            { q: "Uncontrolled laughter (gelastic) without emotional affect.", a: "Focal Seizure with Impaired Consciousness (Gelastic)", opts: ["Focal Seizure with Preserved Consciousness (Emotional)", "Generalized Non-Motor Seizure", "Focal Seizure with Preserved Consciousness (Sensory)"] },
+            { q: "Sensation of 'Already Seen' (Deja Vu) followed by loss of awareness and lip smacking.", a: "Focal Seizure with Impaired Consciousness (Cognitive)", opts: ["Focal Seizure with Preserved Consciousness (Cognitive)", "Generalized Absence Seizure", "Focal Motor Seizure (Tonic)"] },
+            { q: "Patient feels palpitations and racing heart, fully aware, no other symptoms.", a: "Focal Seizure with Preserved Consciousness (Autonomic)", opts: ["Focal Seizure with Impaired Consciousness (Autonomic)", "Generalized Motor Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Patient has piloerection (goosebumps) on the left arm, fully aware.", a: "Focal Seizure with Preserved Consciousness (Autonomic)", opts: ["Focal Seizure with Impaired Consciousness (Sensory)", "Generalized Tonic Seizure", "Focal Motor Seizure (Myoclonic)"] },
+            { q: "Sudden urge to void urine followed by confusion.", a: "Focal Seizure with Impaired Consciousness (Autonomic)", opts: ["Focal Seizure with Preserved Consciousness (Autonomic)", "Generalized Atonic Seizure", "Focal Motor Seizure (Hyperkinetic)"] },
+            { q: "Visual distortions where objects appear smaller (Micropsia), fully aware.", a: "Focal Seizure with Preserved Consciousness (Sensory)", opts: ["Focal Seizure with Impaired Consciousness (Cognitive)", "Generalized Sensory Seizure", "Focal Motor Seizure (Automatism)"] },
+            { q: "Sudden vertigo and spinning sensation, fully aware.", a: "Focal Seizure with Preserved Consciousness (Vestibular)", opts: ["Focal Seizure with Impaired Consciousness (Autonomic)", "Generalized Motor Seizure", "Focal Motor Seizure (Versive)"] },
+            { q: "Repetitive blinking of eyelids (myoclonia) with brief loss of awareness.", a: "Generalized Absence with Eyelid Myoclonia", opts: ["Focal Seizure with Preserved Consciousness", "Focal Motor Seizure (Clonic)", "Generalized Atonic Seizure"] },
+            { q: "Patient stops moving, stares, and is unresponsive for 1 minute. Post-ictal confusion.", a: "Focal Seizure with Impaired Consciousness (Behavioral Arrest)", opts: ["Generalized Non-Motor Seizure (Absence)", "Focal Seizure with Preserved Consciousness", "Generalized Atonic Seizure"] },
+            { q: "Rhythmic jerking of the left leg, fully aware.", a: "Focal Seizure with Preserved Consciousness (Clonic)", opts: ["Focal Seizure with Impaired Consciousness (Clonic)", "Generalized Clonic Seizure", "Focal Motor Seizure (Tonic)"] },
+            { q: "Sudden intense smell of burning rubber, fully aware.", a: "Focal Seizure with Preserved Consciousness (Olfactory)", opts: ["Focal Seizure with Impaired Consciousness (Sensory)", "Generalized Non-Motor Seizure", "Focal Motor Seizure (Automatism)"] },
+            { q: "Sudden metallic taste in mouth, fully aware.", a: "Focal Seizure with Preserved Consciousness (Gustatory)", opts: ["Focal Seizure with Impaired Consciousness (Autonomic)", "Generalized Sensory Seizure", "Focal Motor Seizure (Gelastic)"] },
+            { q: "Patient hears a buzzing sound in the left ear, fully aware.", a: "Focal Seizure with Preserved Consciousness (Auditory)", opts: ["Focal Seizure with Impaired Consciousness (Sensory)", "Generalized Non-Motor Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Patient hears complex music/voices, fully aware.", a: "Focal Seizure with Preserved Consciousness (Auditory)", opts: ["Focal Seizure with Impaired Consciousness (Cognitive)", "Generalized Sensory Seizure", "Focal Motor Seizure (Automatism)"] },
+            { q: "Sensation of heat rising from abdomen to head, aware.", a: "Focal Seizure with Preserved Consciousness (Thermal)", opts: ["Focal Seizure with Impaired Consciousness (Autonomic)", "Generalized Motor Seizure", "Focal Motor Seizure (Tonic)"] },
+            { q: "Painful cramping sensation in the right hand, aware.", a: "Focal Seizure with Preserved Consciousness (Somatosensory)", opts: ["Focal Seizure with Impaired Consciousness (Motor)", "Generalized Tonic Seizure", "Focal Motor Seizure (Dystonic)"] },
+            { q: "Numbness and tingling in the left face, aware.", a: "Focal Seizure with Preserved Consciousness (Somatosensory)", opts: ["Focal Seizure with Impaired Consciousness (Sensory)", "Generalized Sensory Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Forced thinking / racing thoughts, aware.", a: "Focal Seizure with Preserved Consciousness (Cognitive)", opts: ["Focal Seizure with Impaired Consciousness (Cognitive)", "Generalized Absence Seizure", "Focal Motor Seizure (Automatism)"] },
+            { q: "Feeling of detachment from body (Depersonalization), aware.", a: "Focal Seizure with Preserved Consciousness (Cognitive)", opts: ["Focal Seizure with Impaired Consciousness (Emotional)", "Generalized Non-Motor Seizure", "Focal Motor Seizure (Hyperkinetic)"] },
+            { q: "Patient begins to undress (disrobing) during a period of confusion.", a: "Focal Seizure with Impaired Consciousness (Automatism)", opts: ["Focal Seizure with Preserved Consciousness (Motor)", "Generalized Absence Seizure", "Focal Motor Seizure (Hyperkinetic)"] },
+            { q: "Patient walks aimlessly in circles (ambulatory automatism), confused.", a: "Focal Seizure with Impaired Consciousness (Automatism)", opts: ["Focal Seizure with Preserved Consciousness (Motor)", "Generalized Motor Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Patient performs bicycling movements with legs while confused.", a: "Focal Seizure with Impaired Consciousness (Hyperkinetic)", opts: ["Focal Seizure with Preserved Consciousness (Tonic)", "Generalized Tonic-Clonic Seizure", "Focal Motor Seizure (Automatism)"] },
+            { q: "Sudden asymmetric tonic posturing (Figure of 4), confused.", a: "Focal Seizure with Impaired Consciousness (Tonic)", opts: ["Focal Seizure with Preserved Consciousness (Motor)", "Generalized Tonic Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Patient turns head forcibly to the right, then loses consciousness.", a: "Focal Seizure with Impaired Consciousness (Versive)", opts: ["Focal Seizure with Preserved Consciousness (Motor)", "Generalized Motor Seizure", "Focal Motor Seizure (Dystonic)"] },
+            { q: "Patient makes stepping movements with legs, confused.", a: "Focal Seizure with Impaired Consciousness (Automatism)", opts: ["Focal Seizure with Preserved Consciousness (Motor)", "Generalized Myoclonic Seizure", "Focal Motor Seizure (Tonic)"] },
+            { q: "Patient whistles repetitively, confused.", a: "Focal Seizure with Impaired Consciousness (Vocal Automatism)", opts: ["Focal Seizure with Preserved Consciousness (Cognitive)", "Generalized Non-Motor Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Patient repeats the same word/phrase (Palilalia), confused.", a: "Focal Seizure with Impaired Consciousness (Vocal Automatism)", opts: ["Focal Seizure with Preserved Consciousness (Sensory)", "Generalized Absence Seizure", "Focal Motor Seizure (Tonic)"] },
+            { q: "Patient screams in fear, confused.", a: "Focal Seizure with Impaired Consciousness (Emotional)", opts: ["Focal Seizure with Preserved Consciousness (Autonomic)", "Generalized Tonic Seizure", "Focal Motor Seizure (Hyperkinetic)"] },
+            { q: "Patient cries tears (Dacrystic), aware.", a: "Focal Seizure with Preserved Consciousness (Dacrystic)", opts: ["Focal Seizure with Impaired Consciousness (Emotional)", "Generalized Non-Motor Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Head drop (loss of neck tone), split second.", a: "Focal or Generalized Atonic Seizure", opts: ["Focal Motor Seizure (Tonic)", "Generalized Tonic Seizure", "Focal Seizure with Impaired Consciousness"] },
+            { q: "Sudden bilateral arm flexion (Spasms), in clusters.", a: "Epileptic Spasms (Focal or Generalized)", opts: ["Focal Motor Seizure (Clonic)", "Generalized Myoclonic Seizure", "Focal Seizure with Preserved Consciousness"] },
+            { q: "Triggered by reading, jaw jerking occurs.", a: "Reflex Seizure (Focal or Generalized)", opts: ["Focal Seizure with Impaired Consciousness", "Generalized Absence Seizure", "Focal Motor Seizure (Tonic)"] },
+            { q: "Triggered by hot water on head, confused.", a: "Reflex Seizure (Focal with Impaired Consciousness)", opts: ["Focal Seizure with Preserved Consciousness", "Generalized Tonic-Clonic Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Triggered by startling noise, stiffening occurs.", a: "Reflex Seizure (Startle - Tonic)", opts: ["Focal Seizure with Impaired Consciousness", "Generalized Absence Seizure", "Focal Motor Seizure (Automatism)"] },
+            { q: "Rhythmic 3Hz eyelid blink with staring.", a: "Generalized Absence with Eyelid Myoclonia", opts: ["Focal Seizure with Impaired Consciousness", "Focal Motor Seizure (Clonic)", "Generalized Tonic Seizure"] },
+            { q: "Patient feels as if they are outside their body.", a: "Focal Seizure with Preserved Consciousness (Cognitive)", opts: ["Focal Seizure with Impaired Consciousness (Sensory)", "Generalized Non-Motor Seizure", "Focal Motor Seizure (Automatism)"] },
+            { q: "Patient sees their own body (Autoscopy).", a: "Focal Seizure with Preserved Consciousness (Cognitive)", opts: ["Focal Seizure with Impaired Consciousness (Visual)", "Generalized Sensory Seizure", "Focal Motor Seizure (Hyperkinetic)"] },
+            { q: "Patient is unable to read (Alexia) during event, aware.", a: "Focal Seizure with Preserved Consciousness (Cognitive)", opts: ["Focal Seizure with Impaired Consciousness (Language)", "Generalized Non-Motor Seizure", "Focal Motor Seizure (Automatism)"] },
+            { q: "Patient is unable to write (Agraphia) during event, aware.", a: "Focal Seizure with Preserved Consciousness (Cognitive)", opts: ["Focal Seizure with Impaired Consciousness (Motor)", "Generalized Absence Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Patient cannot calculate (Acalculia), aware.", a: "Focal Seizure with Preserved Consciousness (Cognitive)", opts: ["Focal Seizure with Impaired Consciousness (Language)", "Generalized Sensory Seizure", "Focal Motor Seizure (Tonic)"] },
+            { q: "Left arm becomes paralyzed (negative motor), aware.", a: "Focal Seizure with Preserved Consciousness (Atonic/Inhibitory)", opts: ["Focal Seizure with Impaired Consciousness (Motor)", "Generalized Atonic Seizure", "Focal Motor Seizure (Tonic)"] },
+            { q: "Unable to move any limb, fully aware.", a: "Focal Seizure with Preserved Consciousness (Atonic/Inhibitory)", opts: ["Focal Seizure with Impaired Consciousness (Motor)", "Generalized Atonic Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Genital sensations (somatosensory), aware.", a: "Focal Seizure with Preserved Consciousness (Sensory)", opts: ["Focal Seizure with Impaired Consciousness (Autonomic)", "Generalized Non-Motor Seizure", "Focal Motor Seizure (Automatism)"] },
+            { q: "Sexual arousal / orgasm, aware.", a: "Focal Seizure with Preserved Consciousness (Autonomic/Sensory)", opts: ["Focal Seizure with Impaired Consciousness (Emotional)", "Generalized Motor Seizure", "Focal Motor Seizure (Hyperkinetic)"] },
+            { q: "Vomiting (Ictal emesis), confused.", a: "Focal Seizure with Impaired Consciousness (Autonomic)", opts: ["Focal Seizure with Preserved Consciousness (Motor)", "Generalized Tonic-Clonic Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Coughing (Ictal tussis), confused.", a: "Focal Seizure with Impaired Consciousness (Autonomic)", opts: ["Focal Seizure with Preserved Consciousness (Motor)", "Generalized Absence Seizure", "Focal Motor Seizure (Tonic)"] },
+            { q: "Apnea (stops breathing), confused.", a: "Focal Seizure with Impaired Consciousness (Autonomic)", opts: ["Focal Seizure with Preserved Consciousness (Sensory)", "Generalized Motor Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Hyperventilation, confused.", a: "Focal Seizure with Impaired Consciousness (Autonomic)", opts: ["Focal Seizure with Preserved Consciousness (Emotional)", "Generalized Non-Motor Seizure", "Focal Motor Seizure (Automatism)"] },
+            { q: "Bradycardia / Asystole, confused.", a: "Focal Seizure with Impaired Consciousness (Autonomic)", opts: ["Focal Seizure with Preserved Consciousness (Sensory)", "Generalized Atonic Seizure", "Focal Motor Seizure (Tonic)"] },
+            { q: "Pupillary dilation (Mydriasis), confused.", a: "Focal Seizure with Impaired Consciousness (Autonomic)", opts: ["Focal Seizure with Preserved Consciousness (Visual)", "Generalized Motor Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Water drinking (Ictal), confused.", a: "Focal Seizure with Impaired Consciousness (Automatism)", opts: ["Focal Seizure with Preserved Consciousness (Autonomic)", "Generalized Non-Motor Seizure", "Focal Motor Seizure (Tonic)"] },
+            { q: "Running (Cursive), confused.", a: "Focal Seizure with Impaired Consciousness (Hyperkinetic)", opts: ["Focal Seizure with Preserved Consciousness (Motor)", "Generalized Tonic-Clonic Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Spinning (Gyratory), confused.", a: "Focal Seizure with Impaired Consciousness (Hyperkinetic)", opts: ["Focal Seizure with Preserved Consciousness (Vestibular)", "Generalized Motor Seizure", "Focal Motor Seizure (Automatism)"] },
+            { q: "Biting, confused.", a: "Focal Seizure with Impaired Consciousness (Automatism)", opts: ["Focal Seizure with Preserved Consciousness (Motor)", "Generalized Tonic Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Kissing movements, confused.", a: "Focal Seizure with Impaired Consciousness (Automatism)", opts: ["Focal Seizure with Preserved Consciousness (Emotional)", "Generalized Non-Motor Seizure", "Focal Motor Seizure (Tonic)"] },
+            { q: "Grimacing, aware.", a: "Focal Seizure with Preserved Consciousness (Motor)", opts: ["Focal Seizure with Impaired Consciousness (Emotional)", "Generalized Myoclonic Seizure", "Focal Motor Seizure (Hyperkinetic)"] },
+            { q: "Chanting / Singing, confused.", a: "Focal Seizure with Impaired Consciousness (Vocal Automatism)", opts: ["Focal Seizure with Preserved Consciousness (Auditory)", "Generalized Absence Seizure", "Focal Motor Seizure (Clonic)"] },
+            { q: "Right hand fumbling, Left hand dystonia, confused.", a: "Focal Seizure with Impaired Consciousness (Automatism/Dystonic)", opts: ["Focal Seizure with Preserved Consciousness (Motor)", "Generalized Tonic-Clonic Seizure", "Focal Motor Seizure (Clonic)"] }
+        ];
+
+        const semiologyCases = [
+            { q: "A 30-year-old male presents with seizures characterized by asymmetric tonic posturing. His RIGHT arm extends while his LEFT arm flexes (Figure of 4).", a: "Left Hemisphere (Contralateral)", opts: ["Right Hemisphere (Ipsilateral)", "Bilateral Frontal Lobes", "Bilateral Occipital Lobes"] },
+            { q: "A patient describes a warning of 'unpleasant smell' (burning rubber) before losing awareness.", a: "Mesial Temporal Lobe (Uncus)", opts: ["Lateral Temporal Lobe Neocortex", "Orbitofrontal Cortex Region", "Primary Occipital Cortex"] },
+            { q: "During the seizure, the patient frequently spits (ictal spitting) before becoming confused.", a: "Non-Dominant Temporal Lobe", opts: ["Dominant Temporal Lobe", "Dorsolateral Frontal Lobe", "Posterior Parietal Lobe"] },
+            { q: "Seizures involve intelligible speech ('I'm okay, I'm okay') despite loss of awareness later in the event.", a: "Non-Dominant Hemisphere", opts: ["Dominant Hemisphere", "Left Frontal Lobe (Broca)", "Left Temporal Lobe (Wernicke)"] },
+            { q: "Patient exhibits post-ictal nose wiping consistently with the RIGHT hand.", a: "Right Hemisphere (Ipsilateral)", opts: ["Left Hemisphere (Contralateral)", "Bilateral Hemispheres", "Midline Structures"] },
+            { q: "A 12-year-old presents with episodes of inappropriate, mirthless laughter (Gelastic seizures).", a: "Hypothalamus (Hamartoma)", opts: ["Hippocampus (Mesial Temporal)", "Amygdala (Mesial Temporal)", "Visual Cortex (Occipital)"] },
+            { q: "Seizures consist of elementary visual hallucinations (flashing lights/spots) in the LEFT visual field.", a: "Right Occipital Lobe", opts: ["Left Occipital Lobe", "Right Temporal Lobe", "Left Frontal Lobe"] },
+            { q: "Patient reports a sensation of laryngeal constriction (throat tightening) and difficulty breathing.", a: "Insular Cortex", opts: ["Hippocampus Proper", "Pre-frontal Cortex", "Primary Occipital Cortex"] },
+            { q: "Seizures are sleep-related and involve violent hypermotor behavior (bicycling/thrashing).", a: "Frontal Lobe (Ventromesial)", opts: ["Lateral Temporal Lobe", "Primary Occipital Lobe", "Posterior Parietal Lobe"] },
+            { q: "Patient assumes a 'Fencing Posture' (head turned, one arm extended, one flexed) during the seizure.", a: "Supplementary Motor Area (SMA)", opts: ["Mesial Temporal Lobe", "Primary Visual Cortex", "Inferior Frontal Gyrus"] },
+            { q: "Patient has ictal vomiting (emesis) followed by deviation of eyes to the left.", a: "Right Temporal Lobe (Non-Dominant)", opts: ["Left Temporal Lobe", "Left Frontal Lobe", "Right Occipital Lobe"] },
+            { q: "Seizure begins with a rising epigastric sensation (butterflies in stomach).", a: "Mesial Temporal Lobe", opts: ["Lateral Temporal Lobe", "Frontal Pole Region", "Posterior Parietal Lobe"] },
+            { q: "Patient hears simple buzzing or ringing sounds (Auditory Hallucination).", a: "Superior Temporal Gyrus (Heschl's)", opts: ["Inferior Temporal Gyrus", "Dorsolateral Frontal Lobe", "Primary Occipital Lobe"] },
+            { q: "Patient reports a metallic or acidic taste (Gustatory Hallucination).", a: "Insula / Parietal Operculum", opts: ["Primary Occipital Lobe", "Frontal Pole Region", "Mesial Temporal Lobe"] },
+            { q: "Sudden onset of inability to do math (Acalculia) during the event.", a: "Left Parietal Lobe (Angular Gyrus)", opts: ["Right Parietal Lobe", "Frontal Lobe Region", "Temporal Lobe Region"] },
+            { q: "Patient perceives objects as shrinking or growing (Macropsia/Micropsia - Alice in Wonderland).", a: "Temporo-Occipital / Parietal", opts: ["Frontal Lobe Region", "Insular Cortex", "Primary Motor Cortex"] },
+            { q: "Seizure involves repetitive genital manipulation or sexual automatisms.", a: "Non-Dominant Orbitofrontal / Mesial", opts: ["Dominant Temporal Lobe", "Primary Occipital Lobe", "Posterior Parietal Lobe"] },
+            { q: "Patient has a 'Drop Attack' (sudden loss of tone) without loss of consciousness.", a: "Frontal / Generalized Network", opts: ["Mesial Temporal Lobe", "Primary Occipital Lobe", "Insular Cortex"] },
+            { q: "Ictal Pouting (Chapeau de gendarme) - downturning of mouth corners.", a: "Frontal Operculum / Insula", opts: ["Primary Occipital Lobe", "Mesial Temporal Lobe", "Posterior Parietal Lobe"] },
+            { q: "Patient experiences a strong urge to urinate (Ictal Urinary Urge).", a: "Non-Dominant Temporal Lobe", opts: ["Dominant Temporal Lobe", "Frontal Lobe Region", "Primary Occipital Lobe"] },
+            { q: "Forced Head Turn (Version) to the LEFT.", a: "Right Frontal Lobe", opts: ["Left Frontal Lobe", "Right Temporal Lobe", "Left Occipital Lobe"] },
+            { q: "Forced Head Turn (Version) to the RIGHT.", a: "Left Frontal Lobe", opts: ["Right Frontal Lobe", "Left Temporal Lobe", "Right Occipital Lobe"] },
+            { q: "Unilateral Dystonic Posturing of the LEFT hand.", a: "Right Hemisphere (Contralateral)", opts: ["Left Hemisphere (Ipsilateral)", "Bilateral Frontal Lobes", "Bilateral Occipital Lobes"] },
+            { q: "Unilateral Dystonic Posturing of the RIGHT hand.", a: "Left Hemisphere (Contralateral)", opts: ["Right Hemisphere (Ipsilateral)", "Bilateral Frontal Lobes", "Bilateral Occipital Lobes"] },
+            { q: "Focal Clonic Jerking of the LEFT arm.", a: "Right Motor Cortex", opts: ["Left Motor Cortex", "Right Occipital Lobe", "Left Temporal Lobe"] },
+            { q: "Focal Clonic Jerking of the RIGHT arm.", a: "Left Motor Cortex", opts: ["Right Motor Cortex", "Left Occipital Lobe", "Right Temporal Lobe"] },
+            { q: "Ictal Aphasia (unable to speak/understand).", a: "Dominant Hemisphere (usually Left)", opts: ["Non-Dominant Hemisphere", "Right Frontal Lobe", "Right Occipital Lobe"] },
+            { q: "Visual Hallucinations of complex scenes (people, faces).", a: "Basal Temporal / Occipito-temporal", opts: ["Primary Visual Cortex (V1)", "Dorsolateral Frontal", "Primary Motor Cortex"] },
+            { q: "Ictal Asystole (heart pause).", a: "Left Temporal Lobe (Insula link)", opts: ["Right Temporal Lobe", "Primary Occipital Lobe", "Posterior Parietal Lobe"] },
+            { q: "Ictal Bradycardia.", a: "Left Temporal Lobe (Insula link)", opts: ["Right Temporal Lobe", "Primary Occipital Lobe", "Posterior Parietal Lobe"] },
+            { q: "Ictal Tachycardia (heart racing).", a: "Right Temporal / Insula", opts: ["Primary Occipital Lobe", "Primary Motor Cortex", "Posterior Parietal Lobe"] },
+            { q: "Piloerection (Goosebumps) - Unilateral.", a: "Ipsilateral Hemisphere (Insula)", opts: ["Contralateral Hemisphere", "Bilateral Occipital", "Midline Structures"] },
+            { q: "Ictal Pain (burning/stinging).", a: "Insular Cortex (Posterior)", opts: ["Hippocampus Proper", "Dorsolateral Frontal", "Primary Occipital Lobe"] },
+            { q: "Feeling of cold / heat (Thermal).", a: "Insular Cortex / Parietal", opts: ["Primary Occipital Lobe", "Mesial Temporal Lobe", "Frontal Pole Region"] },
+            { q: "Nystagmus with rapid phase to the LEFT.", a: "Right Posterior Hemisphere", opts: ["Left Posterior Hemisphere", "Right Frontal Lobe", "Left Frontal Lobe"] },
+            { q: "Nystagmus with rapid phase to the RIGHT.", a: "Left Posterior Hemisphere", opts: ["Right Posterior Hemisphere", "Left Frontal Lobe", "Right Frontal Lobe"] },
+            { q: "Eye Deviation (Oculogyric) to the LEFT.", a: "Right Frontal Lobe", opts: ["Left Frontal Lobe", "Right Temporal Lobe", "Left Occipital Lobe"] },
+            { q: "Eye Deviation (Oculogyric) to the RIGHT.", a: "Left Frontal Lobe", opts: ["Right Frontal Lobe", "Left Temporal Lobe", "Right Occipital Lobe"] },
+            { q: "Akinetic Mutism (silent, immobile).", a: "Medial Frontal (Cingulate/SMA)", opts: ["Lateral Temporal Lobe", "Primary Occipital Lobe", "Posterior Parietal Lobe"] },
+            { q: "Autoscopic Hallucination (seeing double of self).", a: "Temporo-Parietal Junction", opts: ["Dorsolateral Frontal", "Primary Motor Cortex", "Insular Cortex"] },
+            { q: "Out of Body Experience (floating above).", a: "Temporo-Parietal Junction", opts: ["Dorsolateral Frontal", "Primary Motor Cortex", "Insular Cortex"] },
+            { q: "Depersonalization (detached from reality).", a: "Temporal Lobe (Limbic)", opts: ["Primary Occipital Lobe", "Primary Motor Cortex", "Dorsolateral Frontal"] },
+            { q: "Prosopagnosia (unable to recognize faces).", a: "Fusiform Gyrus (Occipito-temporal)", opts: ["Dorsolateral Frontal", "Primary Motor Cortex", "Insular Cortex"] },
+            { q: "Topographic Agnosia (lost in familiar places).", a: "Non-Dominant Parietal/Occipital", opts: ["Dominant Frontal Lobe", "Primary Motor Cortex", "Insular Cortex"] },
+            { q: "Finger Agnosia (can't identify fingers).", a: "Dominant Parietal (Gerstmann)", opts: ["Non-Dominant Parietal", "Primary Occipital Lobe", "Frontal Pole Region"] },
+            { q: "Right-Left Confusion.", a: "Dominant Parietal (Gerstmann)", opts: ["Non-Dominant Parietal", "Primary Occipital Lobe", "Frontal Pole Region"] },
+            { q: "Agraphia (unable to write).", a: "Dominant Parietal (Gerstmann)", opts: ["Non-Dominant Parietal", "Primary Occipital Lobe", "Frontal Pole Region"] },
+            { q: "Dressing Apraxia.", a: "Non-Dominant Parietal", opts: ["Dominant Parietal", "Primary Occipital Lobe", "Frontal Pole Region"] },
+            { q: "Constructional Apraxia.", a: "Non-Dominant Parietal", opts: ["Dominant Parietal", "Primary Occipital Lobe", "Frontal Pole Region"] },
+            { q: "Phantom Limb Sensation.", a: "Parietal Lobe (Post-central)", opts: ["Frontal Lobe Region", "Temporal Lobe Region", "Occipital Lobe Region"] },
+            { q: "Asomatognosia (denial of limb ownership).", a: "Non-Dominant Parietal", opts: ["Dominant Parietal", "Primary Occipital Lobe", "Frontal Pole Region"] },
+            { q: "Ictal Biting.", a: "Frontal Operculum / Insula", opts: ["Primary Occipital Lobe", "Mesial Temporal Lobe", "Posterior Parietal Lobe"] },
+            { q: "Ictal Kissing.", a: "Temporal / Frontal Operculum", opts: ["Primary Occipital Lobe", "Posterior Parietal Lobe", "Primary Motor Cortex"] },
+            { q: "Running seizures (Cursive).", a: "Frontal / Temporal", opts: ["Primary Occipital Lobe", "Posterior Parietal Lobe", "Insular Cortex"] },
+            { q: "Spinning seizures (Gyratory).", a: "Frontal / Temporal", opts: ["Primary Occipital Lobe", "Posterior Parietal Lobe", "Insular Cortex"] },
+            { q: "Water Drinking.", a: "Temporal Lobe", opts: ["Frontal Lobe Region", "Primary Occipital Lobe", "Posterior Parietal Lobe"] },
+            { q: "Reflex Seizure (Musicogenic).", a: "Superior Temporal Gyrus", opts: ["Primary Occipital Lobe", "Inferior Frontal Gyrus", "Posterior Parietal Lobe"] },
+            { q: "Reflex Seizure (Reading).", a: "Dominant Pre-central / Temporal", opts: ["Primary Occipital Lobe", "Right Frontal Lobe", "Posterior Parietal Lobe"] },
+            { q: "Reflex Seizure (Hot Water).", a: "Parietal / Temporal", opts: ["Primary Occipital Lobe", "Frontal Pole Region", "Primary Motor Cortex"] },
+            { q: "Reflex Seizure (Eating).", a: "Temporo-Limbic / Insula", opts: ["Primary Occipital Lobe", "Primary Motor Cortex", "Posterior Parietal Lobe"] },
+            { q: "Startle Seizure (Sound/Touch).", a: "SMA / Motor Cortex", opts: ["Primary Occipital Lobe", "Mesial Temporal Lobe", "Inferior Temporal Gyrus"] },
+            { q: "Palilalia (repeating words).", a: "Medial Frontal / SMA", opts: ["Primary Occipital Lobe", "Posterior Parietal Lobe", "Insular Cortex"] },
+            { q: "Ictal Whistling.", a: "Frontal Lobe / Cingulate", opts: ["Primary Occipital Lobe", "Posterior Parietal Lobe", "Insular Cortex"] },
+            { q: "Apnea (stops breathing).", a: "Temporal / Limbic", opts: ["Primary Occipital Lobe", "Primary Motor Cortex", "Posterior Parietal Lobe"] },
+            { q: "Hyperventilation.", a: "Mesial Temporal / Frontal", opts: ["Primary Occipital Lobe", "Primary Motor Cortex", "Posterior Parietal Lobe"] },
+            { q: "Ictal Coughing.", a: "Temporal / Frontal", opts: ["Primary Occipital Lobe", "Primary Motor Cortex", "Posterior Parietal Lobe"] },
+            { q: "Mydriasis (Pupil dilation).", a: "Frontal / Temporal (Autonomic)", opts: ["Primary Occipital Lobe", "Primary Motor Cortex", "Posterior Parietal Lobe"] },
+            { q: "Genital Somatosensory.", a: "Paracentral Lobule", opts: ["Lateral Temporal Lobe", "Primary Occipital Lobe", "Frontal Pole Region"] },
+            { q: "Sexual Arousal / Orgasm.", a: "Non-Dominant Temporal / Frontal", opts: ["Primary Occipital Lobe", "Primary Motor Cortex", "Posterior Parietal Lobe"] },
+            { q: "Ecstatic Seizure (Bliss).", a: "Anterior Insula", opts: ["Posterior Insula", "Primary Occipital Lobe", "Primary Motor Cortex"] }
+        ];
+
+        let quizQuestions = [];
+        let currentQIndex = 0;
+        let streak = 0;
+
+        function startQuiz(type) {
+            // Select Question Set
+            if (type === 'classification') {
+                quizQuestions = [...classificationCases];
+                document.getElementById('quizTitle').textContent = "ILAE Classification Test";
+            } else {
+                quizQuestions = [...semiologyCases];
+                document.getElementById('quizTitle').textContent = "Seizure Semiology Test";
+            }
             
-            if (evolvesToBTC) {
-                basicClass = "Focal-to-bilateral tonic-clonic seizure.";
-            } else {
-                basicClass = `Focal ${consString} seizure ${obsString}.`;
-            }
-        } 
-        else {
-            if (evolvesToBTC) {
-                basicClass = "Tonic-clonic seizure, unknown whether focal or generalized,";
-            } else if (check(text, ["blank spell", "stare"])) {
-                basicClass = "Seizure unknown whether focal or generalized, with unknown state of consciousness; observable manifestations poorly characterized.";
-            } else {
-                 basicClass = "Unclassified seizure.";
-            }
+            // Randomize order
+            quizQuestions.sort(() => Math.random() - 0.5);
+            
+            currentQIndex = 0;
+            streak = 0;
+            
+            // UI Transition
+            document.getElementById('quizMenu').classList.add('hidden');
+            document.getElementById('quizActive').classList.remove('hidden');
+            document.getElementById('quizActive').classList.add('flex');
+            
+            renderQuestion();
         }
 
-        // --- STEP 5: EXPANDED CLASSIFICATION ---
-        let expandedString = "";
-        let consExp = (consciousness === "Impaired") ? "impaired-consciousness" : "preserved-consciousness";
+        function renderQuestion() {
+            const q = quizQuestions[currentQIndex];
+            document.getElementById('qCount').textContent = `Question ${currentQIndex + 1} / ${quizQuestions.length}`;
+            document.getElementById('qStreak').textContent = `Streak: ${streak} 🔥`;
+            document.getElementById('qText').textContent = q.q;
+            document.getElementById('qFeedback').classList.add('hidden');
+            
+            const options = [q.a, ...q.opts].sort(() => Math.random() - 0.5);
+            const container = document.getElementById('qOptions');
+            container.innerHTML = '';
+            
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "w-full p-4 text-left border-2 border-slate-200 rounded-lg transition-all font-medium text-slate-700 hover:border-primary hover:bg-slate-50";
+                btn.textContent = opt;
+                btn.onclick = () => handleAnswer(btn, opt, q.a);
+                container.appendChild(btn);
+            });
+            
+            // Scroll to top of active view
+            document.getElementById('quizActive').scrollTo(0, 0);
+        }
 
-        if (onset === "Focal") {
-            if (evolvesToBTC) {
-                expandedString = "Focal-to-bilateral tonic-clonic seizure";
+        function handleAnswer(btn, selected, correct) {
+            const btns = document.querySelectorAll('#qOptions button');
+            btns.forEach(b => b.disabled = true);
+            
+            const fb = document.getElementById('qFeedback');
+            const fbText = document.getElementById('feedbackText');
+            
+            if (selected === correct) {
+                btn.className = "w-full p-4 text-left border-2 rounded-lg transition-all font-medium text-green-800 bg-green-50 border-green-500 relative";
+                btn.innerHTML += '<span class="absolute right-4 top-1/2 -translate-y-1/2 text-2xl">✅</span>';
+                fbText.textContent = "Correct!";
+                fbText.className = "text-lg font-bold text-green-600";
+                streak++;
             } else {
-                expandedString = `Focal ${consExp} ${subtypeName}seizure`;
+                btn.className = "w-full p-4 text-left border-2 rounded-lg transition-all font-medium text-red-800 bg-red-50 border-red-500 relative";
+                btn.innerHTML += '<span class="absolute right-4 top-1/2 -translate-y-1/2 text-2xl">❌</span>';
+                btns.forEach(b => {
+                    if (b.textContent === correct) {
+                        b.className = "w-full p-4 text-left border-2 rounded-lg transition-all font-medium text-green-800 bg-green-50 border-green-500 relative";
+                         b.innerHTML += '<span class="absolute right-4 top-1/2 -translate-y-1/2 text-2xl">✅</span>';
+                    }
+                });
+                fbText.textContent = `Incorrect.`;
+                fbText.className = "text-lg font-bold text-red-600";
+                streak = 0;
             }
-        } else {
-            if (onset === "Unknown" && evolvesToBTC) {
-                expandedString = "Seizure unknown whether focal or generalized – bilateral tonic-clonic seizure";
+            fb.classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            if (currentQIndex < quizQuestions.length - 1) {
+                currentQIndex++;
+                renderQuestion();
             } else {
-                 expandedString = basicClass.replace(/\.$/, "").replace(/,$/, ""); 
-                 expandedString = expandedString.split(" with observable")[0];
+                alert(`Module Complete! Final Streak: ${streak}`);
+                showQuizMenu();
             }
         }
-
-        let sequenceList = [];
-        matches.forEach(m => {
-            let desc = `${m.term} (${m.cat})`;
-            if (m.cat.includes("Aura")) desc = m.term + " (" + m.cat.toLowerCase() + ")";
-            if (m.cat === "Oroalimentary automatisms") desc = m.term + " (oroalimentary automatisms)";
-            if (m.type === "ictal_side" || m.type === "ictal_dystonia" || m.cat === "Asymmetric tonic" || m.type.startsWith("ictal") || m.type === "postictal") {
-                desc = m.term; 
-            }
-            sequenceList.push(desc);
-        });
-
-        if (sequenceList.length > 0) {
-            // Remove redundant BTC entry from the sequence list if it's the main header
-            if (evolvesToBTC) {
-                sequenceList = sequenceList.filter(s => !s.toLowerCase().includes("bilateral tonic-clonic") && !s.toLowerCase().includes("tonic-clonic seizure"));
-            }
-
-            if (onset === "Unknown" && evolvesToBTC) {
-                 if (sequenceList.length > 0) expandedString += ": " + sequenceList.join(", ");
-            } else {
-                 expandedString += " with the following manifestations: " + sequenceList.join(" ➔ ");
-            }
-        } else if (onset !== "Unknown" || !evolvesToBTC) {
-            expandedString += " (Insufficient semiology detected)";
-        }
-        
-        expandedString += ".";
-
-        document.getElementById('basicOutput').innerHTML = basicClass;
-        document.getElementById('expandedOutput').textContent = expandedString;
-        
-        const warn = document.getElementById('gtcWarning');
-        warn.style.display = (basicClass.toLowerCase().includes("tonic-clonic")) ? "block" : "none";
-
-        document.getElementById('results').style.display = 'block';
-    }
-
-    // QUIZ LOGIC (Simplified for length)
-    const quizCases = [
-        { q: "A 7-year-old boy stops activity, stares blankly, and has rhythmic 3Hz blinking. He recovers immediately without confusion.", a: "Typical Absence Seizure", o: ["Focal Impaired Consciousness", "Atypical Absence", "Eyelid Myoclonia"] },
-        { q: "Patient feels a rising sensation in the stomach (epigastric), then smacks lips and is unresponsive.", a: "Focal Impaired Consciousness Seizure", o: ["Focal Preserved Consciousness", "Generalized Absence", "Unknown Onset"] },
-        { q: "Bilateral stiffening followed by shaking, no aura.", a: "Tonic-clonic seizure, unknown whether focal or generalized", o: ["Focal-to-bilateral tonic-clonic", "Generalized Tonic-Clonic", "Unclassified Seizure"] },
-        { q: "A 13-year-old with juvenile myoclonic epilepsy has seizures beginning with a few jerks, followed by stiffening of all limbs and then rhythmic jerking of all limbs.", a: "Myoclonic tonic-clonic seizure", o: ["Generalized tonic-clonic seizure", "Focal-to-bilateral tonic-clonic seizure", "Generalized myoclonic seizure"] },
-        { q: "A 22-year-old man has seizures during which he remains fully aware, with the “hair on my arms standing on edge” and a feeling of being flushed.", a: "Focal preserved consciousness seizure", o: ["Focal impaired consciousness seizure", "Generalized absence seizure", "Autonomic seizure"] },
-        { q: "A 25-year-old woman describes seizures beginning with 30s of an intense feeling that “familiar music is playing.” She is unresponsive during the event.", a: "Focal impaired consciousness seizure", o: ["Focal preserved consciousness seizure", "Generalized tonic-clonic seizure", "Absence seizure"] },
-        { q: "A 3-month-old boy has clusters of short seizures with flexion in the neck and hips, and abduction in the shoulders (up to 2 s). EEG shows hypsarrhythmia.", a: "Generalized epileptic spasms", o: ["Focal epileptic spasms", "Myoclonic seizures", "Tonic seizures"] },
-        { q: "A 14-month-old girl has sudden extension of both arms and flexion of the trunk for approx 2 s. EEG shows left parietal spikes. MRI shows left parietal cortical dysplasia.", a: "Focal epileptic spasms", o: ["Generalized epileptic spasms", "Tonic seizures", "Myoclonic seizures"] },
-        { q: "During video-EEG, a 28-year-old female experiences an ascending sensation from the stomach, then starts chewing and manipulating objects. She can recall the event.", a: "Focal preserved consciousness seizure", o: ["Focal impaired consciousness seizure", "Absence seizure", "Complex partial seizure"] },
-        { q: "An 8-year-old boy reports seeing colored dots on the left side, then becomes unresponsive, turns head left, becomes stiff, then has jerks in all limbs.", a: "Focal-to-bilateral tonic-clonic seizure", o: ["Generalized tonic-clonic seizure", "Focal impaired consciousness seizure", "Unknown onset tonic-clonic seizure"] },
-        { q: "A 33-year-old man has seizures with abdominal discomfort followed by loss of awareness, lip smacking, and right-hand posturing.", a: "Focal impaired consciousness seizure", o: ["Focal preserved consciousness seizure", "Generalized absence seizure", "Temporal lobe seizure"] },
-        { q: "A young woman finds her boyfriend having a seizure in bed. Onset not witnessed. Bilateral stiffening followed by shaking. Normal EEG/MRI.", a: "Unknown whether focal or generalized - bilateral tonic-clonic seizure", o: ["Focal-to-bilateral tonic-clonic seizure", "Generalized tonic-clonic seizure", "Unclassified seizure"] },
-        { q: "Patient has sudden inability to produce speech while understanding remains intact, preserved awareness of the deficit.", a: "Focal preserved-consciousness aphasic seizure", o: ["Focal impaired-consciousness seizure", "Absence seizure", "Generalized tonic-clonic seizure"] },
-        { q: "Patient has sudden intense fear followed by running and agitated wandering with impaired responsiveness.", a: "Focal impaired-consciousness emotional seizure", o: ["Focal preserved-consciousness seizure", "Generalized tonic-clonic seizure", "Absence seizure"] },
-        { q: "Patient has brief episodes of behavioral arrest reported by family, uncertain impairment of consciousness, no clear motor signs.", a: "Seizure unknown whether focal or generalized", o: ["Focal impaired consciousness seizure", "Absence seizure", "Unclassified seizure"] },
-        { q: "Generalized tonic-clonic seizure with abrupt loss of consciousness, generalized tonic stiffening, followed by bilateral clonic jerks, without focal signs.", a: "Generalized tonic-clonic seizure", o: ["Focal-to-bilateral tonic-clonic seizure", "Unknown onset tonic-clonic seizure", "Myoclonic tonic-clonic seizure"] },
-        { q: "Brief behavioral arrest and staring, eyelid myoclonia, unresponsiveness, immediate recovery.", a: "Generalized absence seizure", o: ["Focal impaired consciousness seizure", "Atypical absence seizure", "Eyelid myoclonia"] },
-        { q: "Bilateral, synchronous upper limb jerks on awakening, preserved consciousness between jerks.", a: "Generalized myoclonic seizure", o: ["Focal motor seizure", "Generalized tonic-clonic seizure", "Absence seizure"] },
-        { q: "Generalized axial and limb stiffening, fall, vocalization, without a distinct clonic phase.", a: "Generalized tonic seizure", o: ["Generalized tonic-clonic seizure", "Atonic seizure", "Focal tonic seizure"] },
-        { q: "Sudden loss of axial muscle tone causing head drop or fall, brief impairment of consciousness.", a: "Generalized atonic seizure", o: ["Generalized tonic seizure", "Drop attack", "Focal atonic seizure"] },
-        { q: "Brief lapses of muscle tone in the outstretched arms causing dropping of objects, preserved consciousness.", a: "Generalized epileptic negative myoclonus seizure", o: ["Generalized myoclonic seizure", "Atonic seizure", "Focal motor seizure"] },
-        { q: "Focal seizure with behavioral arrest → forced head and eye deviation to the left → mild tonic posturing.", a: "Focal impaired-consciousness seizure", o: ["Focal preserved-consciousness seizure", "Generalized tonic seizure", "Versive seizure"] },
-        { q: "Focal seizure with rising epigastric sensation → behavioral arrest → oroalimentary and manual automatisms.", a: "Focal impaired-consciousness seizure", o: ["Focal preserved-consciousness seizure", "Absence seizure", "Complex partial seizure"] },
-        { q: "Focal seizure with sudden intense déjà-vu and anxiety, lasting 20 seconds, fully responsive.", a: "Focal preserved-consciousness cognitive-emotional seizure", o: ["Focal impaired-consciousness seizure", "Absence seizure", "Psychogenic non-epileptic seizure"] },
-        { q: "Focal seizure with tingling in the right hand marching to the forearm, preserved responsiveness.", a: "Focal preserved-consciousness somatosensory seizure", o: ["Focal impaired-consciousness seizure", "Simple partial seizure", "Sensory seizure"] },
-        { q: "Focal seizure with brief multicolored flashes in the left hemifield, preserved awareness.", a: "Focal preserved-consciousness visual seizure", o: ["Focal impaired-consciousness seizure", "Migraine aura", "Occipital lobe seizure"] },
-        { q: "Focal seizure with isolated epigastric rising and chest tightness, fully preserved responsiveness.", a: "Focal preserved-consciousness autonomic seizure", o: ["Focal impaired-consciousness seizure", "Panic attack", "Gastric aura"] },
-        { q: "Focal seizure with recurrent brief episodes of unilateral buzzing in the right ear, preserved awareness.", a: "Focal preserved-consciousness auditory seizure", o: ["Focal impaired-consciousness seizure", "Tinnitus", "Auditory hallucination"] },
-        { q: "Focal seizure with rhythmic jerking of the left hand for 40 seconds, preserved responsiveness.", a: "Focal preserved-consciousness clonic seizure", o: ["Focal impaired-consciousness seizure", "Generalized clonic seizure", "Epilepsia partialis continua"] },
-        { q: "Focal seizure with sudden inability to move the right lower face and hand, preserved awareness.", a: "Focal preserved-consciousness negative motor seizure", o: ["Focal impaired-consciousness seizure", "Transient ischemic attack", "Hemiplegic migraine"] },
-        { q: "Focal seizure with brief cluster of unilateral epileptic spasms involving sudden flexion of the right arm and trunk, preserved interaction.", a: "Focal preserved-consciousness seizure (epileptic spasms)", o: ["Generalized epileptic spasms", "Focal impaired-consciousness seizure", "Myoclonic seizure"] },
-        { q: "Focal seizure with inappropriate brief bouts of forced laughter, stereotyped, preserved awareness.", a: "Focal preserved-consciousness emotional (gelastic) seizure", o: ["Focal impaired-consciousness seizure", "Pseudobulbar affect", "Generalized seizure"] },
-        { q: "Focal seizure with abrupt arousal from sleep, dystonic posturing, thrashing movements, unresponsiveness.", a: "Focal impaired-consciousness hypermotor seizure", o: ["Focal preserved-consciousness seizure", "Night terror", "Generalized tonic-clonic seizure"] },
-        { q: "Focal seizure with behavioral arrest, speech arrest, oroalimentary automatisms, right arm dystonia, reduced responsiveness.", a: "Focal impaired-consciousness seizure", o: ["Focal preserved-consciousness seizure", "Absence seizure", "Complex partial seizure"] },
-        { q: "Focal seizure with fluent but paraphasic speech, impaired comprehension, postictal language disturbance.", a: "Focal impaired-consciousness aphasic seizure", o: ["Focal preserved-consciousness seizure", "Wernicke's aphasia", "Global aphasia"] },
-        { q: "Focal seizure with epigastric rising, fear → behavioral arrest, automatisms → unilateral arm dystonia → bilateral tonic-clonic.", a: "Focal-to-bilateral tonic-clonic seizure", o: ["Focal impaired-consciousness seizure", "Generalized tonic-clonic seizure", "Secondary generalized seizure"] },
-        { q: "Focal seizure with right hand clonic jerking → spread to arm and face → bilateral tonic-clonic.", a: "Focal-to-bilateral tonic-clonic seizure", o: ["Focal preserved-consciousness seizure", "Generalized tonic-clonic seizure", "Jacksonian march"] },
-        { q: "Focal seizure with asymmetric tonic posturing and thrashing movements → bilateral tonic-clonic.", a: "Focal-to-bilateral tonic-clonic seizure", o: ["Focal impaired-consciousness seizure", "Generalized tonic-clonic seizure", "Frontal lobe seizure"] },
-        { q: "Focal autonomic seizure with epigastric rising, progressing to impaired consciousness and then bilateral tonic-clonic.", a: "Focal-to-bilateral tonic-clonic seizure", o: ["Focal impaired-consciousness seizure", "Generalized tonic-clonic seizure", "Complex partial seizure"] },
-        { q: "Recurrent nocturnal bilateral tonic-clonic seizures, patient found confused, no clear focal semiology.", a: "Unknown whether focal or generalized - bilateral tonic-clonic seizure", o: ["Focal-to-bilateral tonic-clonic seizure", "Generalized tonic-clonic seizure", "Nocturnal frontal lobe epilepsy"] },
-        { q: "Paroxysmal events with transient impaired responsiveness and falls, inconsistent semiology, inconclusive EEG/imaging.", a: "Unclassified seizure", o: ["Focal impaired-consciousness seizure", "Generalized atonic seizure", "Psychogenic non-epileptic seizure"] }
-    ];
-
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-    }
-
-    function nextQuestion() {
-        document.getElementById('startBtn').style.display = 'none';
-        document.getElementById('nextBtn').style.display = 'none';
-        document.getElementById('quizFeedback').style.display = 'none';
-        const caseItem = quizCases[Math.floor(Math.random() * quizCases.length)];
-        document.getElementById('questionText').textContent = caseItem.q;
-        let opts = [caseItem.a, ...caseItem.o];
-        shuffleArray(opts);
-        
-        // Ensure only 4 options are displayed
-        const displayOpts = opts.slice(0, 4);
-        
-        const container = document.getElementById('optionsContainer');
-        container.innerHTML = '';
-        displayOpts.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = 'quiz-btn';
-            btn.textContent = opt;
-            btn.onclick = () => checkAnswer(btn, opt, caseItem.a);
-            container.appendChild(btn);
-        });
-    }
-
-    function checkAnswer(btn, selected, correct) {
-        const allBtns = document.querySelectorAll('.quiz-btn');
-        const feedback = document.getElementById('quizFeedback');
-        allBtns.forEach(b => b.onclick = null);
-        if (selected === correct) {
-            btn.classList.add('correct');
-            feedback.textContent = "Correct!";
-            feedback.style.color = "#155724";
-            feedback.style.backgroundColor = "#d4edda";
-        } else {
-            btn.classList.add('wrong');
-            feedback.textContent = `Incorrect. Correct: ${correct}`;
-            feedback.style.color = "#721c24";
-            feedback.style.backgroundColor = "#f8d7da";
-            allBtns.forEach(b => { if (b.textContent === correct) b.classList.add('correct'); });
-        }
-        feedback.style.display = 'block';
-        document.getElementById('nextBtn').style.display = 'inline-block';
-    }
-</script>
-
+    </script>
 </body>
 </html>
